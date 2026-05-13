@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Reactome / data caches (downloaded on demand by phase 02 scripts)
+binn/cache/
+graphpath/cache/
+path/cache/
+
+# Generated artifacts (per-phase checkpoints; LaTeX tables are tracked separately)
+binn/artifacts/*.pkl
+binn/artifacts/*.npz
+binn/artifacts/*.pt
+binn/artifacts/results.json
+graphpath/artifacts/*.pkl
+graphpath/artifacts/*.npz
+graphpath/artifacts/*.pt
+graphpath/artifacts/results.json
+path/artifacts/*.pkl
+path/artifacts/*.npz
+path/artifacts/*.pt
+path/artifacts/results.json
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
+
+# Mac OS
+.DS_Store
