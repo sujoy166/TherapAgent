@@ -20,8 +20,12 @@ from _style import OKABE_ITO, apply_style, color_for
 # Drawing helpers
 # --------------------------------------------------------------------------
 def _box(ax, y_top, height, text, *, face, edge=None, fontsize=7.5,
-         bold=False, italic=False):
-    """Draw a rounded box centred horizontally between x=0.04 and x=0.96."""
+         bold=False, italic=False, subline=None, subline_color=None,
+         subline_fontsize=6.2):
+    """Draw a rounded box. If `subline` is given, the box renders two
+    stacked text lines: the main `text` (centred in the upper portion)
+    and the smaller italic `subline` (centred in the lower portion).
+    This is how each BINN layer announces its auxiliary classifier head."""
     x = 0.04
     w = 0.92
     edge = edge or OKABE_ITO["black"]
@@ -33,9 +37,19 @@ def _box(ax, y_top, height, text, *, face, edge=None, fontsize=7.5,
     ax.add_patch(rect)
     weight = "bold" if bold else "normal"
     style = "italic" if italic else "normal"
-    ax.text(x + w / 2, y_top - height / 2, text,
-            ha="center", va="center", fontsize=fontsize,
-            weight=weight, style=style, wrap=True)
+    if subline is None:
+        ax.text(x + w / 2, y_top - height / 2, text,
+                ha="center", va="center", fontsize=fontsize,
+                weight=weight, style=style, wrap=True)
+    else:
+        # Reserve upper 60% for main text, lower 40% for subline.
+        ax.text(x + w / 2, y_top - height * 0.32, text,
+                ha="center", va="center", fontsize=fontsize,
+                weight=weight, style=style, wrap=True)
+        ax.text(x + w / 2, y_top - height * 0.78, subline,
+                ha="center", va="center", fontsize=subline_fontsize,
+                style="italic",
+                color=subline_color or OKABE_ITO["black"])
     return y_top - height
 
 
@@ -49,51 +63,41 @@ def _arrow(ax, y_from, y_to, x=0.5, color=None):
     ax.add_patch(arrow)
 
 
-def _side_tap(ax, y, label, color):
-    """Annotate an auxiliary-head tap on the right side."""
-    x_box = 0.96
-    x_lbl = 1.02
-    # short horizontal line + dot
-    ax.plot([x_box, x_lbl - 0.005], [y, y], color=color, linewidth=0.6,
-            clip_on=False)
-    ax.plot([x_lbl - 0.005], [y], "o", markersize=2.5, color=color,
-            clip_on=False)
-    ax.text(x_lbl, y, label, ha="left", va="center", fontsize=6.5,
-            color=color, clip_on=False)
-
-
 # --------------------------------------------------------------------------
 # Per-model panels
 # --------------------------------------------------------------------------
 def draw_binn(ax):
     ax.set_title("BINN  (Hartman et al., 2023)", fontsize=9, pad=4)
-    fc_input  = color_for("BINN") + "30"
-    fc_hidden = color_for("BINN") + "55"
+    color = color_for("BINN")
+    fc_input  = color + "30"
+    fc_hidden = color + "55"
     fc_out    = OKABE_ITO["yellow"] + "60"
 
     y = 0.97
+    box_h = 0.12   # taller boxes so the subline fits without overlap
+    gap = 0.03
     # Input row
-    y = _box(ax, y, 0.10,
+    y = _box(ax, y, box_h,
              r"ssGSEA scores  (N pathways)",
-             face=fc_input, bold=True)
-    _side_tap(ax, y + 0.05, r"head$_0$", color_for("BINN"))
+             face=fc_input, bold=True,
+             subline=r"$\to$ classifier head$_0$",
+             subline_color=color)
 
-    # Three hidden sparse-mask blocks
     block_labels = [
         r"Sparse Linear  (Reactome mask, $L_1$) $\to$ tanh $\to$ BN $\to$ Drop",
         r"Sparse Linear  (Reactome parents, $L_2$) $\to$ tanh $\to$ BN $\to$ Drop",
         r"Sparse Linear  (Reactome parents, $L_3$) $\to$ tanh $\to$ BN $\to$ Drop",
     ]
     for i, label in enumerate(block_labels, start=1):
-        _arrow(ax, y, y - 0.04)
-        y -= 0.04
-        y = _box(ax, y, 0.10, label, face=fc_hidden, fontsize=6.8)
-        _side_tap(ax, y + 0.05, rf"head$_{i}$", color_for("BINN"))
+        _arrow(ax, y, y - gap)
+        y -= gap
+        y = _box(ax, y, box_h, label, face=fc_hidden, fontsize=6.6,
+                 subline=rf"$\to$ classifier head$_{i}$",
+                 subline_color=color)
 
-    # Final output (mean of per-layer sigmoids)
-    _arrow(ax, y, y - 0.05)
-    y -= 0.05
-    _box(ax, y, 0.09,
+    _arrow(ax, y, y - gap - 0.005)
+    y -= gap + 0.005
+    _box(ax, y, 0.10,
          r"$\hat{p}_h = \mathrm{mean}_{\ell}\,\sigma(\mathrm{head}_\ell[h])$",
          face=fc_out, bold=True, fontsize=8)
 
@@ -172,10 +176,10 @@ def main() -> None:
     apply_style()
     # Stack the panels into a tight ~3.3-inch-tall figure so the page does
     # not show dead space below the lowest BINN box.
-    fig, axes = plt.subplots(1, 3, figsize=(7.1, 3.3))
+    fig, axes = plt.subplots(1, 3, figsize=(7.1, 3.6))
     for ax in axes:
         ax.set_xlim(0, 1.0)
-        ax.set_ylim(0.30, 1.0)   # crop unused bottom half
+        ax.set_ylim(0.18, 1.0)   # extra vertical room for BINN's taller boxes
         ax.axis("off")
     draw_binn(axes[0])
     draw_graphpath(axes[1])
@@ -187,7 +191,7 @@ def main() -> None:
         fontsize=8.5, y=1.01,
     )
     fig.subplots_adjust(left=0.005, right=0.995, top=0.92, bottom=0.01,
-                        wspace=0.18)
+                        wspace=0.28)
     out = Path(__file__).parent / "fig1_architectures.pdf"
     fig.savefig(out)
     print(f"wrote {out}")
