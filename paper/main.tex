@@ -9,11 +9,11 @@
 
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage{amsmath, amssymb}
+% acmart already loads amsmath/amssymb/hyperref/xcolor; do not re-load them
 \usepackage[font=small,labelfont=bf]{caption}
-\usepackage{xcolor}
 \usepackage{etoolbox}
-\usepackage{hyperref}
+\usepackage[inline]{enumitem}
+\usepackage{cleveref}
 
 % --- Resilient \input ------------------------------------------------
 % If the model's per-phase LaTeX table hasn't been generated yet, emit a
@@ -23,7 +23,7 @@
   \IfFileExists{#1}{\input{#1}}{%
     \begin{table}[ht]\centering\small
     \fbox{\parbox{0.9\linewidth}{\centering\itshape
-      Placeholder for \texttt{#1} --- run the corresponding phase
+      Placeholder for \texttt{\detokenize{#1}} --- run the corresponding phase
       to generate this table (#2).}}
     \end{table}}}
 \hypersetup{

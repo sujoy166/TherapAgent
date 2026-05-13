@@ -43,10 +43,10 @@ def draw_binn(ax):
     for i, lab in enumerate(labels):
         _box(ax, 0.05, 0.58 - i * 0.18, 0.6, 0.10, lab, fc, fontsize=7)
     # Heads — one per layer
-    _box(ax, 0.72, 0.78, 0.23, 0.10, "head\\,$_0$ (3-d)", color_for("BINN") + "60", fontsize=7)
+    _box(ax, 0.72, 0.78, 0.23, 0.10, r"head$_0$ (3-d)", color_for("BINN") + "60", fontsize=7)
     for i in range(3):
         _box(ax, 0.72, 0.58 - i * 0.18, 0.23, 0.10,
-             f"head\\,$_{i+1}$ (3-d)", color_for("BINN") + "60", fontsize=7)
+             f"head$_{i+1}$ (3-d)", color_for("BINN") + "60", fontsize=7)
     # Final average
     _box(ax, 0.30, 0.05, 0.40, 0.10,
          r"$p_h = \mathrm{mean}_\ell\, \sigma(\mathrm{head}_\ell[h])$",
@@ -63,15 +63,15 @@ def draw_graphpath(ax):
     fc = color_for("GraphPath") + "30"
     _box(ax, 0.05, 0.80, 0.9, 0.10, "ssGSEA scores (N pathways)", fc)
     _box(ax, 0.05, 0.65, 0.9, 0.10,
-         "Per-pathway proj.\\ → tanh \\quad (1 → $F'$)", fc, fontsize=7)
+         r"Per-pathway proj. → tanh  (1 → $F'$)", fc, fontsize=7)
     _box(ax, 0.05, 0.45, 0.9, 0.13,
          "Multi-head GAT ($K=3$, ELU)\nattention on Reactome adjacency", fc,
          fontsize=7)
     _box(ax, 0.05, 0.28, 0.9, 0.10,
-         "Per-node readout (shared Linear, tanh)\\quad → vector $\\in\\mathbb{R}^N$",
+         r"Per-node readout (shared Linear, tanh) → vector $\in\mathbb{R}^N$",
          fc, fontsize=7)
     _box(ax, 0.05, 0.12, 0.9, 0.10,
-         "FC → sigmoid \\quad (3-d multi-label)", color_for("GraphPath") + "60",
+         "FC → sigmoid  (3-d multi-label)", color_for("GraphPath") + "60",
          fontsize=7)
     for y_from, y_to in [(0.80, 0.75), (0.65, 0.58), (0.45, 0.38),
                           (0.28, 0.22)]:
@@ -83,14 +83,14 @@ def draw_path(ax):
     fc = color_for("PATH") + "30"
     _box(ax, 0.05, 0.82, 0.9, 0.10, "ssGSEA scores (N pathways)", fc)
     _box(ax, 0.05, 0.69, 0.55, 0.10,
-         "Per-pathway proj.\\ → tanh \\quad (1 → $d$)", fc, fontsize=7)
+         r"Per-pathway proj. → tanh  (1 → $d$)", fc, fontsize=7)
     _box(ax, 0.62, 0.69, 0.33, 0.10,
          "Laplacian PE\n(top-$k$ eigvecs)", color_for("PATH") + "60", fontsize=7)
     _box(ax, 0.05, 0.50, 0.9, 0.14,
          "L = 2 × edge-aware Graph Transformer blocks\n(soft mask, edge bias, $H=4$ heads, FFN×4, BN)",
          fc, fontsize=7)
     _box(ax, 0.05, 0.32, 0.9, 0.10,
-         "Attention-weighted readout \\quad ($g = \\sum w_p\\,x_p$)",
+         r"Attention-weighted readout  ($g = \sum w_p\, x_p$)",
          fc, fontsize=7)
     _box(ax, 0.05, 0.16, 0.9, 0.10,
          "BN → GELU → Dropout → FC → sigmoid (3-d multi-label)",
