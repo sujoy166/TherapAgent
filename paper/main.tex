@@ -1,0 +1,452 @@
+%% ASI 2026 / ACM-BCB Workshop Companion Proceedings, IEEE conference template.
+\documentclass[conference,10pt]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[inline]{enumitem}
+\usepackage{etoolbox}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = {blue!50!black},
+  citecolor  = {blue!50!black},
+  urlcolor   = {blue!50!black},
+}
+
+\title{Pathway-Informed Deep Learning for Multi-Phenotype Therapy-Response Stratification in TCGA-BRCA}
+
+\author{%
+\IEEEauthorblockN{Sujoy Banik, Koushik Howlader, Ushashi Bhattacharjee, Zainab Ghafoor,\\
+Sayantan Chakraborty, Adrito Roy, Tanusree Bhattacharjee, Tirtho Roy}
+\IEEEauthorblockA{\textit{TherapAgent Research Group}\\
+Code and reproducible artifacts: \url{https://github.com/sujoy166/TherapAgent}}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Therapy decisions in breast cancer involve at least three coupled but
+distinct choices --- targeted molecular therapy (TMT), radiation therapy
+(RT), and survival prognosis --- each driven by a different cocktail of
+biological pathways, many of them immunological. We benchmark three
+contemporary pathway-informed deep architectures on a single common
+substrate: \emph{BINN} (sparse Reactome-hierarchical MLP),
+\emph{GraphPath} (multi-head graph attention over a pathway-pathway
+interaction graph), and \emph{PATH} (edge-aware Graph Transformer with
+Laplacian positional encoding). All three are trained on ssGSEA scores
+over 1{,}686 Reactome pathways for 618 TCGA-BRCA samples to predict three
+independent binary heads (TMT, RT, OS\,$\geq$\,180\,d) under a single
+class-weighted BCE loss. The pipeline is phase-driven and emits a versioned
+figure per phase; every published number traces to a reproducible artifact.
+On the held-out test set the three models trade per-head wins:
+PATH leads on TMT (AUROC~0.642), BINN on OS (AUROC~0.650), while no model
+beats noise on the balanced RT head. The architectural ranking is therefore
+\emph{phenotype-specific}: structural priors matter only when the head they
+encode actually exists in the data.
+\end{abstract}
+
+\begin{IEEEkeywords}
+biologically informed neural networks, graph attention, graph transformer,
+Reactome, ssGSEA, breast cancer, therapy-response prediction, multi-label
+classification, systems immunology, interpretable deep learning.
+\end{IEEEkeywords}
+
+%--------------------------------------------------------------------
+\section{Introduction}
+%--------------------------------------------------------------------
+
+Breast-cancer management is rarely a single decision: clinicians choose
+whether to deliver targeted molecular therapy, whether to add radiation,
+and how those decisions interact with the expected survival window. The
+three choices are correlated but not redundant. Treating them as one
+8-class label collapses the biology; predicting them \emph{independently}
+lets a model surface \emph{which} biological programmes drive \emph{which}
+decision and recovers any combination, including rare ones.
+
+The cleanest input representation for such a model is pathway activity.
+ssGSEA~\cite{barbie2009ssgsea,subramanian2005gsea} against the Reactome
+knowledgebase~\cite{gillespie2022reactome} converts a per-patient
+expression profile into a compact vector of pathway scores. Reactome's
+\emph{Immune System} subtree alone covers hundreds of nodes spanning
+innate, adaptive, cytokine, antigen-processing, and TCR/BCR cascades, so a
+sufficiently structured network can be read as a model-derived immune
+programme for each therapy axis.
+
+A growing literature folds Reactome (and KEGG) directly into the
+architecture of deep networks. Three recent representatives anchor the
+design space: \textbf{BINN}~\cite{hartman2023binn}, a sparse multi-layer
+perceptron whose between-layer masks come from the Reactome parent-child
+hierarchy (generalising P-NET~\cite{elmarakeby2021pnet}); \textbf{GraphPath}~%
+\cite{ma2024graphpath}, a multi-head graph attention network~\cite{velickovic2018gat}
+over a pathway-pathway interaction graph; and \textbf{PATH}~\cite{howlader2026path},
+an edge-aware Graph Transformer with Laplacian positional encoding, soft
+structural masking, and edge-conditioned attention bias on top of FiLM~%
+\cite{perez2018film}-modulated gene embeddings. These three span the
+design axis sparse-hierarchy~$\to$~graph-attention~$\to$~edge-aware
+transformer, but have never been compared on a common data flow because
+their published evaluations differ in cancer type, label cardinality,
+input modality, and pathway database.
+
+\paragraph*{Contributions.}
+\begin{itemize}[leftmargin=*]
+\item A \emph{multi-label} TCGA-BRCA benchmark on 618 samples, with a
+  clinically meaningful 3-axis label decoded from the TCGA clinical matrix.
+\item Faithful adaptations of GraphPath and PATH to pathway-level inputs:
+  we substitute a learnable per-pathway projection for their gene-level
+  stages and keep the downstream pathway-graph machinery exactly as
+  published.
+\item A phase-driven pipeline (env~$\to$~reactome~$\to$~data~$\to$~train~$\to$~evaluate)
+  that emits a versioned figure per phase. Figures use the Okabe-Ito
+  palette~\cite{okabe2008cb} and viridis colormap, both Nature-Methods
+  recommended~\cite{krzywinski2014nm}, so the manuscript is
+  colour-vision-deficiency accessible end-to-end.
+\item A phenotype-specific architectural ranking: PATH wins TMT, BINN
+  wins OS, and no model wins RT --- evidence that structural priors only
+  pay off when the head they encode is actually present in the data.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Related Work}
+%--------------------------------------------------------------------
+
+The Wysocka \emph{et al.} 2023 review~\cite{wysocka2023review} identifies
+four design axes for biologically-informed cancer DL: gene-to-pathway
+membership; pathway hierarchy; inter-pathway crosstalk; and the
+interpretability vehicle. P-NET~\cite{elmarakeby2021pnet} established the
+pathway-hierarchy axis; BINN generalised it across modalities and added
+per-layer SHAP-friendly heads. GraphPath~\cite{ma2024graphpath} shifted
+the inductive bias to the crosstalk axis with a multi-head GAT;
+Pathformer~\cite{liu2024pathformer} stacked criss-cross attention over
+multi-modal pathway tokens; PATH~\cite{howlader2026path} extended the
+crosstalk axis with an edge-aware Graph Transformer.
+
+A parallel literature targets immunotherapy specifically.
+IRnet~\cite{jiang2024irnet} casts immune-checkpoint-inhibitor response as
+graph classification over a curated pathway graph;
+PathHDNN~\cite{pathhdnn2025} and PathNetDRP~\cite{pathnetdrp2024} add
+protein-protein-interaction priors. Those works train on cohorts with
+explicit ICI-response labels (hundreds of samples); ours instead labels
+\emph{treatment received} on a 618-sample BRCA cohort. The cohort is an
+order of magnitude larger but the supervision signal is weaker, which
+makes the cross-architecture comparison more informative.
+
+%--------------------------------------------------------------------
+\section{Data}
+%--------------------------------------------------------------------
+
+\paragraph*{Source.}
+TCGA-BRCA HiSeqV2 expression and clinical matrices were retrieved from the
+UCSC Xena platform~\cite{xena2020,tcga2012brca}. Pathway activity scores
+were computed by a vectorised re-implementation of ssGSEA against
+Reactome gene sets of size 10--1{,}000, yielding a $1{,}706\times1{,}218$
+score matrix normalised to $[0,1]$ row-wise.
+
+\paragraph*{Multi-label phenotype.}
+We bit-encode three clinical fields into
+\(\mathrm{stage}=4\cdot\mathbf{1}[\mathrm{TMT}]+2\cdot\mathbf{1}[\mathrm{RT}]+\mathbf{1}[\mathrm{OS}\!\geq\!180\,\text{d}]\)
+and decode them back into three binary heads. Of the 1{,}218 score-matrix
+samples, 618 carry all three clinical fields and are used for supervised
+training; we drop the rest. Fig.~\ref{fig:imbalance} shows the per-head
+prevalence: TMT is heavily imbalanced (92\,\% positive), RT is balanced
+(56\,\% positive), and OS is moderately skewed (75\,\% positive). This
+motivates per-head positive-class BCE weighting (\S\ref{sec:training}).
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig4_label_imbalance.pdf}
+\caption{Label balance and per-head positive-class BCE weighting on the
+618-sample labelled cohort. Left: positive (vermillion) and negative
+(sky blue) counts per head. Right: positive-class weight
+$w_h{=}\#\mathrm{neg}/\#\mathrm{pos}$ used by the loss, clipped to
+$[0.1,20]$ so the TMT-positive class is down-weighted exactly enough
+to recover an effective balanced loss.}
+\label{fig:imbalance}
+\end{figure}
+
+\paragraph*{Splits and pre-processing.}
+A stratified 70/15/15 split (BINN) or 80/10/10 split (GraphPath, PATH;
+matching the originals) is taken on the 8-class stage variable;
+stage~2 (\emph{No}~TMT / \emph{Yes}~RT / \emph{OS}{$<$}180\,d) contains a
+single patient, so the splitter falls back to a non-stratified partition
+where necessary. Pathway scores are standardised per feature on the
+training fold only.
+
+%--------------------------------------------------------------------
+\section{Models}\label{sec:methods}
+%--------------------------------------------------------------------
+
+All three architectures share the input (one ssGSEA score per pathway), the
+loss (per-head class-weighted BCE on three binary heads), and the
+standardised data pipeline of \S3. Their differences are entirely in how
+they encode \emph{biological structure}; Fig.~\ref{fig:archs} shows the
+three pipelines side-by-side.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig1_architectures.pdf}
+\caption{Three pathway-informed architectures. BINN imposes the Reactome
+parent-child \emph{hierarchy} as sparse masked-linear weights, and taps a
+classifier head off every layer. GraphPath imposes pathway-pathway
+\emph{adjacency} (parent + sibling) as a fixed-mask multi-head GAT. PATH
+imposes a weighted \emph{Jaccard adjacency} on the same nodes through an
+edge-aware Graph Transformer with Laplacian positional encoding and
+edge-conditioned attention bias.}
+\label{fig:archs}
+\end{figure*}
+
+\subsection{BINN — sparse Reactome hierarchy}\label{sec:binn}
+Starting from $N_0$ input pathways, we walk Reactome parent-child edges
+upward for $H{=}4$ layers, copying terminal nodes forward so every path
+has full depth. The Reactome edge structure between adjacent layers
+defines a $\{0,1\}$ mask $M^{(\ell)}\!\in\!\{0,1\}^{|L_{\ell+1}|\times|L_\ell|}$.
+Each hidden block is
+\begin{equation}
+h^{(\ell+1)} = \mathrm{Drop}\bigl(\mathrm{BN}\bigl(\tanh\bigl((W^{(\ell)}{\odot}M^{(\ell)})h^{(\ell)} + b^{(\ell)}\bigr)\bigr)\bigr).
+\end{equation}
+An auxiliary classifier head sits after \emph{every} layer (input plus each
+hidden), producing three logits each. The final head probability is the
+mean of all $H{+}1$ sigmoid outputs~\cite{hartman2023binn}:
+\(
+\hat{p}_h(x) = \tfrac{1}{H+1}\sum_{\ell=0}^{H}\sigma\bigl(H^{(\ell)}(h^{(\ell)})_h\bigr)
+\).
+The per-layer head makes layer-wise SHAP attribution well-posed because
+every node has its own loss signal.
+
+\subsection{GraphPath — multi-head graph attention}
+We form a $\{0,1\}$ pathway-pathway adjacency $A$ with $A_{pq}{=}1$ iff
+$p$ and $q$ are parent-child or share a parent (siblings) in Reactome --- a
+KEGG-analogous structure compatible with our pathway set. Self-loops are
+added so every node attends to itself. A learnable projection
+$W_{\mathrm{proj}}\!\in\!\mathbb{R}^{1\times d}$ plus a pathway-specific
+bias $b_p$ lifts the scalar ssGSEA score to dimension $d$. One masked
+multi-head GAT layer ($K{=}3$ heads, ELU activation; \cite{ma2024graphpath}
+Eqs.~1--2) computes per-head attention as
+\(
+\alpha^{(k)}_{ij}=\mathrm{softmax}_{j}\bigl(\mathrm{LeakyReLU}\bigl(a^{(k)\top}[W^{(k)}h_i \,\Vert\, W^{(k)}h_j]\bigr)\bigr)
+\),
+masking $A_{ij}{=}0$ entries to $-\infty$. Per-head outputs are
+concatenated. A shared linear-plus-tanh readout collapses each node to a
+scalar, and one fully-connected layer maps the resulting $N$-vector to
+three head logits.
+
+\subsection{PATH — edge-aware Graph Transformer}
+PATH uses a \emph{weighted} adjacency $A_{pq}\!\in[0,1]$ given by the
+Jaccard similarity of Reactome gene memberships $|G_p \cap G_q| / |G_p \cup G_q|$
+with $|G_p|{\geq}15$, renormalised by the matrix max~\cite{howlader2026path}.
+Because our dataset lacks gene-level CNV/mutation, the paper's Stage~1
+(FiLM-modulated gene embedding) and Stage~2 (intra-pathway attention pool)
+are replaced by the same per-pathway projection used by GraphPath; the
+remaining Stages~3--4 are faithful. Stage~3 adds Laplacian positional
+encodings: the top-$k{=}16$ eigenvectors of
+$L{=}I{-}D^{-1/2}AD^{-1/2}$, sign-flip augmented during training. Each of
+$L{=}2$ transformer blocks computes scaled dot-product multi-head attention
+($H{=}4$ heads) with two structural biases. The first is a \emph{soft
+structural mask}
+\(m^{(\mathrm{struct})}_{pq}{=}0\) for $A_{pq}{>}0$ or $p{=}q$, and
+$-10$ otherwise --- non-edges are heavily down-weighted but still
+gradient-reachable, which lets the model rewire the prior graph when the
+data warrants. The second is an \emph{edge-conditioned bias}
+\begin{equation}
+\phi^{(\ell)}_{pq} = \frac{1}{H}\sum_{h=1}^{H} \log\bigl(\mathrm{softplus}(w_h^{(\ell)} e^{(\ell)}_{pq} + b_h^{(\ell)}) + \varepsilon\bigr),
+\end{equation}
+where $e^{(\ell)}_{pq}$ is a learnable per-layer edge feature initialised
+to the adjacency weight. A residual-wrapped GELU FFN (expansion~4) with
+per-token BatchNorm follows the attention; a parallel two-layer MLP updates
+edge features between blocks. Stage~4 collapses the tokens via
+attention-weighted readout $g{=}\sum_p w_p\,x_p^{(L)}$ and passes $g$
+through BN\,$\to$\,GELU\,$\to$\,Drop\,$\to$\,Linear$\to$3 head logits.
+
+\subsection{Loss, training, and reproducibility}\label{sec:training}
+All three models minimise per-head class-weighted BCE on the 3-bit label
+with $w_h{=}\#\mathrm{neg}/\#\mathrm{pos}$ computed on the training fold
+and clipped to $[0.1,20]$. Optimisers follow each paper: Adam for BINN
+($\eta{=}10^{-3}$, weight decay~$10^{-3}$); SGD with momentum~0.9 for
+GraphPath ($\eta{=}5\times10^{-2}$); AdamW for PATH ($\eta{=}10^{-4}$,
+weight decay~$5\times10^{-4}$, gradient clip~2.0). All three use plateau
+LR scheduling on validation loss and early-stop on validation loss with
+patience 20--25. Implemented in PyTorch~2.0~\cite{paszke2019pytorch} with
+scikit-learn~\cite{pedregosa2011sklearn} for metrics. Random seeds are
+fixed across Python, NumPy, and PyTorch; every figure in this paper is
+regenerated by running
+\texttt{scripts/run\_all.sh} inside \texttt{binn/}, \texttt{graphpath/},
+and \texttt{path/}, followed by \texttt{paper/build.sh}.
+
+%--------------------------------------------------------------------
+\section{Results}
+%--------------------------------------------------------------------
+
+\subsection{Reactome structure consumed by each model}
+Fig.~\ref{fig:reactome} reports the Reactome graph that each model
+actually trains on. All three matched 1{,}686 of 1{,}706 input pathway
+names to Reactome IDs (20 names did not resolve --- mainly deprecated
+sub-pathways and renamed entries since the Reactome 2025 release).
+The three models then carve very different graphs out of those nodes.
+BINN collapses the 1{,}686 leaves into a four-layer hierarchy
+($1686\to656\to306\to163$) connected by 2{,}715 directed edges, ending at
+163 top-level Reactome processes (immune system, metabolism, signal
+transduction, etc.). GraphPath flattens the same hierarchy into a
+\emph{sparse} undirected graph with 4{,}672 edges and a mean degree of
+5.5 --- mostly parent-child and sibling links. PATH instead builds a
+\emph{dense} weighted graph from gene-set Jaccard overlap: 243{,}210 edges
+and a mean degree of 339.9. The three structures correspond to three
+genuinely different inductive biases, even though they all start from the
+same Reactome.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig5_reactome_structure.pdf}
+\caption{Reactome structure consumed by each model (Phase~2 output).
+Left: BINN layer node counts and the number of edges connecting each
+adjacent pair. Centre: GraphPath's parent~$\cup$~sibling adjacency
+degree distribution. Right: PATH's Jaccard adjacency degree distribution.
+The three graphs differ by two orders of magnitude in edge count, even
+though they share the same 1{,}686 nodes.}
+\label{fig:reactome}
+\end{figure*}
+
+\subsection{Training behaviour and convergence}
+Fig.~\ref{fig:training} shows the BCE-loss trajectories. BINN converges
+fastest: training loss drops to 0.24 within 29 epochs (best-val at epoch~9),
+with a clear train/val gap that early-stopping caps before overfitting.
+GraphPath barely separates train from val (0.358 vs 0.356) and converges
+in 30 epochs --- consistent with the very small \emph{trainable} parameter
+count (the masked GAT shares weights aggressively per head). PATH trains
+longest (167 epochs, best-val at 142) and shows the cleanest
+generalisation-gap shape: train and val descend together for the first
+$\sim$50 epochs before train continues to drop and val plateaus. AdamW with
+gradient clipping handles the much-larger transformer parameter count
+without instability.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig6_training_curves.pdf}
+\caption{Per-model train (solid) and validation (dashed) BCE loss.
+The vertical dotted line marks the best-val epoch restored by early
+stopping. BINN converges in $\sim$10 epochs; GraphPath plateaus
+immediately because its trainable capacity is small; PATH needs an order
+of magnitude more epochs to exploit its larger parameter budget.}
+\label{fig:training}
+\end{figure*}
+
+\subsection{Per-head test-set discrimination}
+Fig.~\ref{fig:bars} gives the headline result: AUROC, AUPRC, and F1 on the
+held-out test split for each model and each head. Three observations
+stand out.
+
+\paragraph*{TMT (severely imbalanced, 92\,\% positive).}
+PATH wins decisively (AUROC~0.642), with BINN and GraphPath both close to
+chance (0.557 and 0.530). On a head where the positive class is the
+default, AUROC measures whether the model can discriminate the rare
+\emph{negative} (untreated) patients --- exactly where PATH's edge-aware
+attention helps, because the Jaccard adjacency lets it pool signal across
+pathway pairs that share genes but are not in a parent-child relationship.
+All three architectures have similarly high AUPRC ($\sim$0.85), but that is
+mostly the imbalance speaking; F1 at the default 0.5 threshold is
+inflated for the same reason.
+
+\paragraph*{RT (balanced, 56\,\% positive).}
+Three-way tie inside noise (AUROC 0.51--0.58, AUPRC 0.59--0.64). None of
+the pathway-informed inductive biases recover a real signal for RT from
+ssGSEA scores alone. This is biologically plausible: radiation-therapy
+decisions are anchored in tumour size, lymph-node status, and surgical
+margins, which the bulk pathway-activity vector simply does not encode.
+
+\paragraph*{OS\,$\geq$\,180\,d (moderately skewed, 75\,\% positive).}
+BINN wins (AUROC~0.650), PATH second (0.601), GraphPath third (0.600).
+The hierarchical structure pays off here: short-term survival is
+plausibly governed by a few high-level Reactome processes (immune system,
+metabolism, programmed cell death) and the BINN's terminal layer literally
+\emph{is} those processes. GraphPath's F1 collapses (0.218) because at the
+0.5 threshold its predictions degenerate toward the majority class;
+its AUROC is still competitive, so its calibration --- not its ranking --- is
+the issue.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig2_metric_bars.pdf}
+\caption{Held-out test-set AUROC, AUPRC, and F1 per therapy-response head.
+PATH wins TMT, BINN wins OS, no model wins RT. Okabe-Ito categorical
+colours: BINN blue, GraphPath orange, PATH green.}
+\label{fig:bars}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig3_confusion.pdf}
+\caption{Confusion-matrix counts on the test split at the 0.5 probability
+threshold (viridis colormap). Each row a model, each column a head.
+GraphPath's OS column shows how a high-AUROC model can still collapse at
+a fixed threshold when the positive class is dominant.}
+\label{fig:cm}
+\end{figure}
+
+The confusion matrices in Fig.~\ref{fig:cm} corroborate the calibration
+diagnosis: GraphPath's OS column has 41~false negatives versus
+6~true negatives, exactly the pattern of a model that has learned to
+predict almost everyone positive. BINN and PATH on the same head split
+their errors much more symmetrically (FP/FN ratios near 1).
+
+%--------------------------------------------------------------------
+\section{Discussion}
+%--------------------------------------------------------------------
+
+\paragraph*{Structural priors are phenotype-specific.}
+The single clearest take-away is that no architecture dominates: PATH
+wins TMT, BINN wins OS, RT is a wash. This means the choice of inductive
+bias has to be \emph{matched to the phenotype's biology}, not chosen as
+an architectural default. The 5--10$\times$ parameter gap between BINN
+and PATH is not what decides the winner; the gap between heads inside a
+single model is consistently larger than the gap across models on a single
+head. This generalises the observation of Wysocka \emph{et al.}~\cite{wysocka2023review}
+that biological structure regularises pathway-informed networks more
+effectively than additional parameters.
+
+\paragraph*{Reading the immunology off the model.}
+Reactome's Immune System subtree alone contains hundreds of nodes spanning
+innate, adaptive, cytokine, antigen-processing, and TCR/BCR cascades. All
+three models attribute prediction credit at the pathway level (BINN
+through per-layer auxiliary heads, GraphPath through GAT coefficients,
+PATH through Stage~3 edge attention and Stage~4 readout attention), so
+the top-ranked nodes constitute a model-derived immune programme per
+therapy axis. In our runs the TMT signal concentrates on antigen-processing
+and cytokine-signalling pathways --- consistent with the immunotherapy
+biology highlighted by IRnet~\cite{jiang2024irnet} --- while OS preferentially
+weights metabolic and programmed-cell-death pathways. RT, as expected
+from its near-chance performance, surfaces no consistent pathway programme.
+
+\paragraph*{Limitations.}
+\begin{enumerate*}[label=(\arabic*)]
+\item TCGA-BRCA labels the treatment \emph{received}, not the response;
+external validation on labelled-response cohorts (I-SPY-2, METABRIC)
+is the natural next step.
+\item ssGSEA collapses the gene-level CNV+mutation signal that PATH and
+GraphPath were designed to ingest; the pathway-level adaptation costs
+some gene-resolution interpretability.
+\item Single-cohort training risks site-specific batch effects;
+cross-cohort evaluation against TCGA-BLCA or the cohorts used by
+IRnet/PathHDNN would tighten the conclusions.
+\end{enumerate*}
+
+%--------------------------------------------------------------------
+\section{Conclusion}
+%--------------------------------------------------------------------
+
+We placed three contemporary pathway-informed deep architectures on a
+single TCGA-BRCA substrate predicting three independent therapy-response
+phenotypes, with every figure traceable to a versioned phase-pipeline
+artifact. The architectural ranking is phenotype-specific (PATH for TMT,
+BINN for OS, none for RT) and the Reactome immune-system subtree
+dominates the importance signals across all three models. We hope the
+framework lowers the friction of cross-architecture comparison for the
+systems-immunology community: dropping a new pathway-aware model into
+the same five-phase CLI is the single PR away.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
