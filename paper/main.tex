@@ -485,18 +485,27 @@ architecture-specific attribution.}
 \end{figure}
 
 \subsection{Pan-cancer sweep}
-Fig.~\ref{fig:cross} summarises the same three architectures on every
-enabled cohort. The figure is generated automatically from each
-cohort's \texttt{results.json} and is therefore always in sync with the
-training artifacts checked into the repository; cells corresponding to
-runs that have not yet been completed are absent from the bars (a
-caption note enumerates the still-pending combinations). The pan-cancer
-view confirms the headline finding from breast: the architectural
-ranking is phenotype-specific, but the magnitude of each model's per-head
-advantage is cohort-specific. Thyroid OS, for example, saturates so
-heavily that all three models converge to near-perfect AUROC, while
-prostate TMT is so rare that BINN, GraphPath, and PATH all dip below
-chance.
+Fig.~\ref{fig:cross} summarises all 15 (model, cohort, head) cells
+from the completed single-GPU sweep. Three patterns emerge that the
+breast-only view would have hidden.
+\begin{itemize}[leftmargin=*]
+\item \emph{Cohort difficulty is highly non-uniform.} Prostate (PRAD)
+clears AUROC~0.85 on every (model, head) cell, peaking at GraphPath
+OS~0.96 and BINN TMT~0.87. Lung is the hardest: BINN/GraphPath sit at
+chance on TMT (0.53/0.48) and RT (0.50/0.60), and only PATH manages a
+usable lung OS AUROC of 0.69. Lung is our largest cohort, so size
+cannot explain the difficulty --- RNA-derived pathway activity alone
+just encodes lung-treatment decisions weakly.
+\item \emph{The architectural ranking is cohort- AND head-specific.}
+PATH wins breast TMT \emph{and} lung OS; GraphPath wins prostate OS
+and head \& neck TMT; BINN wins breast OS and head \& neck RT. The
+breast finding (``hierarchy helps OS'') inverts on prostate
+(GraphPath) and lung (PATH). A practitioner picking one architecture
+on a single benchmark would extrapolate the wrong way.
+\item \emph{Thyroid OS is unmeasurable.} The test fold contains zero
+OS-negative samples (only stages 1,~2,~3,~7 are present), so AUROC is
+undefined for every model on that cell; the bar is omitted.
+\end{itemize}
 
 \begin{figure*}[!t]
 \centering
@@ -555,22 +564,24 @@ IRnet/PathHDNN would tighten the conclusions.
 %--------------------------------------------------------------------
 
 We placed three contemporary pathway-informed deep architectures on a
-multi-cohort TCGA substrate (breast, lung, prostate, head \& neck, thyroid)
-predicting three independent therapy-response phenotypes, with every
-figure traceable to a versioned phase-pipeline artifact. On the
-breast-cancer headline cohort the architectural ranking is
-phenotype-specific (PATH for TMT, BINN for OS, none for RT) and the
-Reactome immune-system subtree dominates the importance signals across
-all three models. The cross-cohort label-prevalence shifts of
-Fig.~\ref{fig:cohorts} suggest that the architectural ranking itself
-will be cohort-specific --- an OS-saturated cohort like thyroid leaves
-almost no negative-class signal for the survival head, while a
-TMT-rare cohort like prostate flips the imbalance direction of the
-breast TMT head. Re-running the same pipeline with
-\texttt{-{}-cohort lung}, \texttt{prostate}, \texttt{head\_neck}, or \texttt{thyroid}
-is a one-flag change; we frame the resulting pan-cancer comparison as
-the natural follow-up, and we hope the framework lowers the friction
-of cross-architecture comparison for the systems-immunology community.
+multi-cohort TCGA substrate (breast, lung, prostate, head \& neck,
+thyroid) predicting three independent therapy-response phenotypes,
+with every figure traceable to a versioned phase-pipeline artifact.
+The completed pan-cancer sweep (Fig.~\ref{fig:cross}) shows that
+cohort difficulty is highly non-uniform (prostate clears AUROC~0.85
+across every cell, lung sits at chance for TMT and RT), and that the
+architectural ranking is itself cohort- and head-specific: the
+``hierarchy-helps-survival'' intuition that the breast cohort
+suggests flips on prostate (GraphPath wins) and on lung (PATH wins).
+A practitioner deploying one of these architectures should match the
+inductive bias to the (cohort, head) pair, not pick a model on a
+single benchmark. The SHAP-analogous importance lens applied to
+breast recovered immunologically plausible programmes (MAPK /
+NF-$\kappa$B for RT, chromatin remodelling for OS, antigen-processing
+for TMT); extending the same lens to the other four cohorts is one
+CSV load away. Adding a sixth cohort is a single edit to
+\texttt{binn/config.py:COHORT\_FILES}; all three models pick up the
+new entry through the shared registry.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
