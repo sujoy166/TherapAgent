@@ -9,8 +9,6 @@ from pathlib import Path
 #   Final DataSet/<final>.csv                -- N labeled samples x (sample, stage, 1706 pathway scores)
 #
 # Disabled cohorts (not in the registry):
-#   "lung"    -- Intermediate Dataset/Lung_cancer.csv is byte-identical to the
-#                breast intermediate; regenerate upstream before enabling.
 #   "bladder" -- Final DataSet/Bladder_cancer_final.csv only has 21 samples;
 #                too small to train a stratified split safely.
 COHORT_FILES: dict = {
@@ -18,6 +16,7 @@ COHORT_FILES: dict = {
     "prostate":  ("Prostate_cancer",  "Prostate_cancer_final"),
     "head_neck": ("Head_Neck_Cancer", "Head_Neck_Cancer_Final"),
     "thyroid":   ("Thyroid_Cancer",   "Thyroid_Cancer_Final"),
+    "lung":      ("Lung_cancer",      "Lung_cancer_final"),
 }
 
 

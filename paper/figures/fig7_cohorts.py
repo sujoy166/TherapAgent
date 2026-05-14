@@ -28,6 +28,7 @@ COHORTS = [
     ("prostate",  "Prostate_cancer_final.csv",  "Prostate"),
     ("head_neck", "Head_Neck_Cancer_Final.csv", "Head & Neck"),
     ("thyroid",   "Thyroid_Cancer_Final.csv",   "Thyroid"),
+    ("lung",      "Lung_cancer_final.csv",      "Lung"),
 ]
 
 HEADS = ("TMT", "RT", r"OS $\geq$ 180 d")
@@ -75,15 +76,15 @@ def _panel(ax, cohort_key, csv_name, pretty_name):
 
 def main() -> None:
     apply_style()
-    fig, axes = plt.subplots(1, 4, figsize=(7.1, 2.4), sharey=True)
+    fig, axes = plt.subplots(1, 5, figsize=(7.1, 2.3), sharey=True)
     for ax, (k, csv, pretty) in zip(axes, COHORTS):
         _panel(ax, k, csv, pretty)
     axes[0].set_ylabel("Positive prevalence")
 
     fig.suptitle(
         "Per-cohort positive prevalence of the three therapy-response heads. "
-        "Lung and bladder cohorts are present in the data but excluded from "
-        "training (data-curation issue / sample count too low).",
+        "Bladder ($n{=}21$) is present in the data but excluded from training "
+        "because its sample count is too low for a stratified split.",
         fontsize=8.5, y=1.04,
     )
     fig.tight_layout()

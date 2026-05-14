@@ -24,7 +24,7 @@ print("STEP 1: Downloading TCGA HiSeqV2...")
 print("=" * 60)
 t0 = time.time()
 
-url = "https://tcga-xena-hub.s3.us-east-1.amazonaws.com/download/TCGA.BRCA.sampleMap%2FHiSeqV2.gz"
+url = "https://tcga-xena-hub.s3.us-east-1.amazonaws.com/download/TCGA.LUNG.sampleMap%2FHiSeqV2.gz"
 df = pd.read_csv(url, sep="\t", index_col=0, compression="gzip")
 df = df.apply(pd.to_numeric, errors="coerce")
 df = df.T.fillna(df.median(axis=1)).T
@@ -187,7 +187,7 @@ t0 = time.time()
 
 clin_url = (
     "https://tcga-xena-hub.s3.us-east-1.amazonaws.com/download/"
-    "TCGA.BRCA.sampleMap%2FBRCA_clinicalMatrix"
+    "TCGA.LUNG.sampleMap%2FLUNG_clinicalMatrix"
 )
 clin_df = pd.read_csv(clin_url, sep="\t", index_col=0, low_memory=False)
 print(f"  Shape : {clin_df.shape[0]} samples × {clin_df.shape[1]} columns")
