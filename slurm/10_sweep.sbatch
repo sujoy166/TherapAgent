@@ -89,6 +89,32 @@ echo "[sweep] resume mode : $THERAP_RESUME"
 COHORTS=(breast lung prostate head_neck thyroid)
 MODELS=(binn graphpath path)
 
+# ── 0. CUDA kernel probe ───────────────────────────────────────────────
+# Fail fast (and clearly) if the venv's torch was built without kernels
+# for the GPU SLURM gave us. The 00_install.sbatch script pins torch to
+# 2.4.1+cu118 which ships sm_70..sm_90; if a user re-runs `pip install
+# torch` and pulls a newer wheel that drops sm_70, V100 jobs would
+# blow up halfway through training.
+python <<'PY'
+import sys, torch
+print(f"[sweep] torch  : {torch.__version__}  (CUDA build {torch.version.cuda})")
+print(f"[sweep] CUDA   : available={torch.cuda.is_available()}")
+if not torch.cuda.is_available():
+    sys.exit(0)
+name = torch.cuda.get_device_name(0)
+cap  = torch.cuda.get_device_capability(0)
+print(f"[sweep] device : {name}  CC {cap[0]}.{cap[1]}")
+try:
+    x = torch.randn(16, 16, device="cuda")
+    _ = (x @ x.t()).sum().item()
+    print("[sweep] CUDA kernel probe OK")
+except Exception as e:
+    print(f"[sweep] CUDA kernel probe FAILED: {e}", file=sys.stderr)
+    print("[sweep] re-run 00_install.sbatch — current torch wheel lacks "
+          "kernels for this GPU compute capability.", file=sys.stderr)
+    sys.exit(2)
+PY
+
 # ── 1. One-time paper-conformance check for every model ────────────────
 for MODEL in "${MODELS[@]}"; do
     echo "[sweep] paper-conformance check: $MODEL"

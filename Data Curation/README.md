@@ -299,10 +299,38 @@ each writes to a per-cohort subdirectory.
 | `THERAP_VENV`           | `$THERAP_REPO/.venv-therap`     | Python venv path. |
 | `THERAP_PYTHON_MODULE`  | `python/3.11`                   | First module name tried; the loader also walks a fallback list (`python/3.11.7`, `python/3.11.5`, `python-3.11`, `Python/3.11`, `py-python/3.11`, `python3/3.11`). |
 | `THERAP_CUDA_MODULE`    | `cuda/12.1`                     | Optional. Set `THERAP_LOAD_CUDA=0` to skip. |
+| `THERAP_TORCH_VERSION`  | `2.4.1`                         | PyTorch version installed by `00_install.sbatch`. 2.4.1 is the last release whose default wheel ships `sm_70` kernels (V100). |
+| `THERAP_TORCH_INDEX`    | `https://download.pytorch.org/whl/cu118` | Wheel index used at install. The CUDA 11.8 build supports CC 7.0-9.0 (V100 → H100) on Nova. |
 | `THERAP_TECTONIC`       | `tectonic`                      | LaTeX engine binary. |
 | `THERAP_SLURM_EMAIL`    | `tirtho@iastate.edu`            | `--mail-user` target. |
 | `THERAP_RESUME`         | `0`                             | If `1`, the sweep skips cells that already have a `results.json`. |
 | `NO_INSTALL`            | `0`                             | If `1`, `submit_all.sh` skips the venv job. |
+
+### Recovering from `cudaErrorNoKernelImageForDevice`
+
+If the sweep aborts with
+
+```
+torch.AcceleratorError: CUDA error: no kernel image is available
+                        for execution on the device
+```
+
+the venv has a PyTorch wheel that was built without kernels for the
+GPU SLURM gave you (typically a Tesla V100 / CC 7.0 with a 2.5+
+default-PyPI wheel). Reinstall using the project's pinned torch wheel:
+
+```bash
+source /work/mech-ai-scratch/tirtho/TherapAgent/.venv-therap/bin/activate
+pip install --force-reinstall \
+    --index-url https://download.pytorch.org/whl/cu118 \
+    torch==2.4.1
+```
+
+Or just re-submit `slurm/00_install.sbatch` — it now installs the
+correct wheel automatically and runs a CUDA kernel probe at the end.
+The sweep script also runs the probe before launching any training
+cell, so the failure mode is now fast and explicit instead of
+mid-training.
 
 ---
 

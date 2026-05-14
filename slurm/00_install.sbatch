@@ -60,10 +60,40 @@ load_python_module
 python3 -m venv "$THERAP_VENV"
 source "$THERAP_VENV/bin/activate"
 python -m pip install --quiet --upgrade pip wheel
+
+# ── PyTorch first, pinned to a wheel that still ships sm_70 kernels.
+# Nova hands out a mix of V100 (CC 7.0), A100 (CC 8.0), A40 (CC 8.6),
+# etc. The default PyPI wheel for torch >= 2.5 drops sm_70, so jobs
+# that land on a V100 raise:
+#   torch.AcceleratorError: CUDA error: no kernel image is available
+#                           for execution on the device.
+# torch 2.4.1+cu118 includes sm_70..sm_90 and works on every Nova GPU.
+THERAP_TORCH_VERSION="${THERAP_TORCH_VERSION:-2.4.1}"
+THERAP_TORCH_INDEX="${THERAP_TORCH_INDEX:-https://download.pytorch.org/whl/cu118}"
+echo "[install] installing torch==$THERAP_TORCH_VERSION from $THERAP_TORCH_INDEX"
+python -m pip install --quiet \
+    --index-url "$THERAP_TORCH_INDEX" \
+    "torch==$THERAP_TORCH_VERSION"
+
+# ── Everything else from PyPI.
 python -m pip install --quiet -r requirements.txt
 
-# Verify the imports the pipeline actually uses.
-python -c "import torch, numpy, pandas, sklearn, scipy, matplotlib; \
-print('[install] torch', torch.__version__, '| cuda', torch.cuda.is_available())"
-
+# ── Runtime probe: import all libs and exercise the GPU if one is
+#    visible. If CUDA reports the no-kernel-image error here, we
+#    failed early instead of mid-training.
+python <<'PY'
+import torch, numpy, pandas, sklearn, scipy, matplotlib
+print(f"[install] torch    : {torch.__version__}")
+print(f"[install] CUDA build: {torch.version.cuda}")
+print(f"[install] CUDA available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    name = torch.cuda.get_device_name(0)
+    cap  = torch.cuda.get_device_capability(0)
+    print(f"[install] device 0 : {name}  CC {cap[0]}.{cap[1]}")
+    # Tiny tensor op verifies the wheel actually has a kernel for this CC.
+    x = torch.randn(8, 8, device="cuda")
+    y = x @ x.t()
+    _ = y.sum().item()
+    print(f"[install] CUDA kernel probe: OK")
+PY
 echo "[install] done."

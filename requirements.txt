@@ -2,7 +2,10 @@ numpy>=1.24
 pandas>=2.0
 scipy>=1.10
 scikit-learn>=1.3
-torch>=2.0
 joblib>=1.3
 matplotlib>=3.7
 requests>=2.31
+# NOTE: torch is intentionally NOT pinned here. 00_install.sbatch
+# installs the CUDA-11.8 wheel of torch 2.4.1, which is the most recent
+# release whose binaries still ship sm_70 kernels for Tesla V100. The
+# wheels on PyPI default to dropping sm_70 from PyTorch 2.5+.
