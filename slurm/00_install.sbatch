@@ -22,7 +22,10 @@
 
 set -euo pipefail
 
-THERAP_REPO="${THERAP_REPO:-$PWD}"
+# Hard-coded canonical repo path on Nova. Override only if the
+# repository has been moved.
+THERAP_REPO="${THERAP_REPO:-/work/mech-ai-scratch/tirtho/TherapAgent}"
+cd "$THERAP_REPO"
 THERAP_VENV="${THERAP_VENV:-$THERAP_REPO/.venv-therap}"
 THERAP_PYTHON_MODULE="${THERAP_PYTHON_MODULE:-python/3.11}"
 
@@ -54,7 +57,6 @@ load_python_module() {
 }
 load_python_module
 
-cd "$THERAP_REPO"
 python3 -m venv "$THERAP_VENV"
 source "$THERAP_VENV/bin/activate"
 python -m pip install --quiet --upgrade pip wheel

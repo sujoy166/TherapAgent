@@ -30,13 +30,16 @@ python3 -m path.main      all --cohort thyroid
 
 ### Full sweep on Nova (3 models × 5 cohorts on one A100)
 
+Canonical repo path is `/work/mech-ai-scratch/tirtho/TherapAgent`,
+hard-coded as the default `THERAP_REPO`. Submit from anywhere:
+
 ```bash
-bash slurm/submit_all.sh
+bash /work/mech-ai-scratch/tirtho/TherapAgent/slurm/submit_all.sh
 ```
 
 SLURM mail goes to `tirtho@iastate.edu` by default (override with
-`THERAP_SLURM_EMAIL=other@example.com bash slurm/submit_all.sh`).
-End-of-sweep wall-clock on a single A100 is ≈ 50 min.
+`THERAP_SLURM_EMAIL=other@example.com bash …`). End-of-sweep
+wall-clock on a single A100 is ≈ 50 min.
 
 ## Where to look next
 

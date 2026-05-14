@@ -23,7 +23,9 @@
 
 set -euo pipefail
 
-THERAP_REPO="${THERAP_REPO:-$PWD}"
+# Hard-coded canonical paths on Nova. Override only if the repository
+# has been moved.
+THERAP_REPO="${THERAP_REPO:-/work/mech-ai-scratch/tirtho/TherapAgent}"
 THERAP_VENV="${THERAP_VENV:-$THERAP_REPO/.venv-therap}"
 # Default email for the project owner. Override at submit:
 #   THERAP_SLURM_EMAIL=other@example.com bash slurm/submit_all.sh

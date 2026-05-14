@@ -36,7 +36,10 @@
 
 set -euo pipefail
 
-THERAP_REPO="${THERAP_REPO:-$PWD}"
+# Hard-coded canonical repo path on Nova. Override only if the
+# repository has been moved.
+THERAP_REPO="${THERAP_REPO:-/work/mech-ai-scratch/tirtho/TherapAgent}"
+cd "$THERAP_REPO"
 THERAP_VENV="${THERAP_VENV:-$THERAP_REPO/.venv-therap}"
 THERAP_PYTHON_MODULE="${THERAP_PYTHON_MODULE:-python/3.11}"
 THERAP_CUDA_MODULE="${THERAP_CUDA_MODULE:-cuda/12.1}"
@@ -74,8 +77,6 @@ if [[ "${THERAP_LOAD_CUDA:-1}" == "1" ]] && command -v module >/dev/null 2>&1; t
 fi
 # shellcheck disable=SC1091
 source "$THERAP_VENV/bin/activate"
-
-cd "$THERAP_REPO"
 
 echo "[sweep] repo : $THERAP_REPO"
 echo "[sweep] venv : $THERAP_VENV"

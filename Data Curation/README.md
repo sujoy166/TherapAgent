@@ -173,14 +173,20 @@ one GPU). Two-job dependency chain:
   (venv build)            (5 cohorts × 3 models + paper build)
 ```
 
-`#SBATCH --mail-user=tirtho@iastate.edu` is baked into both files. The
-sweep wall-clock is ≈50 min on an A100; allocation is `--time=08:00:00`.
+**Canonical repo path on Nova:** `/work/mech-ai-scratch/tirtho/TherapAgent`
+— hard-coded as the default `THERAP_REPO` in all three slurm scripts and
+in `submit_all.sh`. Submit from anywhere; the scripts `cd` into that
+path themselves.
+
+`#SBATCH --mail-user=tirtho@iastate.edu` is baked into both sbatch
+files. Sweep wall-clock ≈ 50 min on an A100; allocation
+`--time=08:00:00`.
 
 ### Full sweep (recommended)
 
 ```bash
-cd /path/to/TherapAgent
-bash slurm/submit_all.sh
+# From anywhere on Nova:
+bash /work/mech-ai-scratch/tirtho/TherapAgent/slurm/submit_all.sh
 ```
 
 That's it. Walks all five cohorts × three models, regenerates the
@@ -226,14 +232,19 @@ something more durable.)
 ### Manual sbatch (without the wrapper)
 
 ```bash
+cd /work/mech-ai-scratch/tirtho/TherapAgent
+
 # 1. One-time install
-sbatch --mail-user=tirtho@iastate.edu slurm/00_install.sbatch
+sbatch slurm/00_install.sbatch
+# → returns <JID_INSTALL>
 
 # 2. Sweep (depends on the install job's success)
-sbatch --dependency=afterok:<JID_INSTALL> \
-       --mail-user=tirtho@iastate.edu \
-       slurm/10_sweep.sbatch
+sbatch --dependency=afterok:<JID_INSTALL> slurm/10_sweep.sbatch
 ```
+
+Both files already declare `--mail-user=tirtho@iastate.edu` and the
+canonical `$THERAP_REPO`, so the bare `sbatch` invocations above are
+sufficient.
 
 ### Watch progress
 
@@ -283,7 +294,7 @@ each writes to a per-cohort subdirectory.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `THERAP_REPO`           | `$PWD`                          | Absolute path to the cloned repo. |
+| `THERAP_REPO`           | `/work/mech-ai-scratch/tirtho/TherapAgent` | Absolute path to the cloned repo on Nova. |
 | `THERAP_VENV`           | `$THERAP_REPO/.venv-therap`     | Python venv path. |
 | `THERAP_PYTHON_MODULE`  | `python/3.11`                   | First module name tried; the loader also walks a fallback list (`python/3.11.7`, `python/3.11.5`, `python-3.11`, `Python/3.11`, `py-python/3.11`, `python3/3.11`). |
 | `THERAP_CUDA_MODULE`    | `cuda/12.1`                     | Optional. Set `THERAP_LOAD_CUDA=0` to skip. |

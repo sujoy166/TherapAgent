@@ -24,8 +24,7 @@ slurm/
 ## TL;DR
 
 ```bash
-cd /path/to/TherapAgent
-THERAP_SLURM_EMAIL=you@example.com bash slurm/submit_all.sh
+bash /work/mech-ai-scratch/tirtho/TherapAgent/slurm/submit_all.sh
 ```
 
 That submits two jobs; SLURM runs them in order; the final manuscript
@@ -50,7 +49,7 @@ allocation is generous; tighten it if your QoS prefers shorter walls.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `THERAP_REPO`           | `$PWD`                          | Absolute path to the cloned repository. |
+| `THERAP_REPO`           | `/work/mech-ai-scratch/tirtho/TherapAgent` | Canonical repo path on Nova; hard-coded in all three slurm scripts. |
 | `THERAP_VENV`           | `$THERAP_REPO/.venv-therap`     | Python virtual-env path. |
 | `THERAP_PYTHON_MODULE`  | `python/3.11`                   | `module load` name on Nova. |
 | `THERAP_CUDA_MODULE`    | `cuda/12.1`                     | Optional CUDA module. Set `THERAP_LOAD_CUDA=0` to skip. |
