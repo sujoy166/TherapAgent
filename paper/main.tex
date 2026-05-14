@@ -17,7 +17,7 @@
   urlcolor   = {blue!50!black},
 }
 
-\title{Pathway-Informed Deep Learning for Multi-Phenotype Therapy-Response Stratification in TCGA-BRCA}
+\title{Pathway-Informed Deep Learning for Multi-Phenotype Therapy-Response Stratification across TCGA Solid Tumors}
 
 \author{%
 \IEEEauthorblockN{Sujoy Banik, Koushik Howlader, Ushashi Bhattacharjee, Zainab Ghafoor,\\
@@ -30,7 +30,7 @@ Code and reproducible artifacts: \url{https://github.com/sujoy166/TherapAgent}}
 \maketitle
 
 \begin{abstract}
-Therapy decisions in breast cancer involve at least three coupled but
+Therapy decisions in solid tumors involve at least three coupled but
 distinct choices --- targeted molecular therapy (TMT), radiation therapy
 (RT), and survival prognosis --- each driven by a different cocktail of
 biological pathways, many of them immunological. We benchmark three
@@ -38,16 +38,23 @@ contemporary pathway-informed deep architectures on a single common
 substrate: \emph{BINN} (sparse Reactome-hierarchical MLP),
 \emph{GraphPath} (multi-head graph attention over a pathway-pathway
 interaction graph), and \emph{PATH} (edge-aware Graph Transformer with
-Laplacian positional encoding). All three are trained on ssGSEA scores
-over 1{,}686 Reactome pathways for 618 TCGA-BRCA samples to predict three
-independent binary heads (TMT, RT, OS\,$\geq$\,180\,d) under a single
-class-weighted BCE loss. The pipeline is phase-driven and emits a versioned
-figure per phase; every published number traces to a reproducible artifact.
-On the held-out test set the three models trade per-head wins:
-PATH leads on TMT (AUROC~0.642), BINN on OS (AUROC~0.650), while no model
-beats noise on the balanced RT head. The architectural ranking is therefore
-\emph{phenotype-specific}: structural priors matter only when the head they
-encode actually exists in the data.
+Laplacian positional encoding). The pipeline ingests
+\emph{four TCGA cohorts} (breast $n{=}618$, prostate $n{=}496$,
+head \& neck $n{=}429$, thyroid $n{=}109$) curated through an
+identical ssGSEA-against-Reactome workflow, so the same 1{,}686-pathway
+feature vector represents every patient. A class-weighted BCE loss
+trains three independent binary heads (TMT, RT, OS\,$\geq$\,180\,d).
+The pipeline is phase-driven and emits a versioned figure per phase;
+every published number traces to a reproducible artifact. On the
+breast-cancer held-out test set the three models trade per-head wins:
+PATH leads on TMT (AUROC~0.642), BINN on OS (AUROC~0.650), and no
+model beats noise on the balanced RT head. The architectural ranking
+is therefore \emph{phenotype-specific}: structural priors matter only
+when the head they encode actually exists in the data --- and the
+cross-cohort label-prevalence profile (Fig.~\ref{fig:cohorts}) makes
+clear that the head present in the data shifts dramatically between
+cancer types, motivating per-cohort retraining via a single
+\texttt{--cohort} CLI flag.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -60,13 +67,17 @@ classification, systems immunology, interpretable deep learning.
 \section{Introduction}
 %--------------------------------------------------------------------
 
-Breast-cancer management is rarely a single decision: clinicians choose
+Solid-tumor management is rarely a single decision: clinicians choose
 whether to deliver targeted molecular therapy, whether to add radiation,
 and how those decisions interact with the expected survival window. The
 three choices are correlated but not redundant. Treating them as one
 8-class label collapses the biology; predicting them \emph{independently}
 lets a model surface \emph{which} biological programmes drive \emph{which}
-decision and recovers any combination, including rare ones.
+decision and recovers any combination, including rare ones. Crucially,
+the three-axis label distribution shifts dramatically between cancer
+types --- 92\,\% TMT-positive in breast versus 11\,\% in prostate ---
+so the right architecture and the right head are inseparable from the
+right cohort (Fig.~\ref{fig:cohorts}).
 
 The cleanest input representation for such a model is pathway activity.
 ssGSEA~\cite{barbie2009ssgsea,subramanian2005gsea} against the Reactome
@@ -139,41 +150,71 @@ makes the cross-architecture comparison more informative.
 \section{Data}
 %--------------------------------------------------------------------
 
-\paragraph*{Source.}
-TCGA-BRCA HiSeqV2 expression and clinical matrices were retrieved from the
-UCSC Xena platform~\cite{xena2020,tcga2012brca}. Pathway activity scores
-were computed by a vectorised re-implementation of ssGSEA against
-Reactome gene sets of size 10--1{,}000, yielding a $1{,}706\times1{,}218$
-score matrix normalised to $[0,1]$ row-wise.
+\paragraph*{Source and curation.}
+TCGA HiSeqV2 expression and clinical matrices were retrieved from the
+UCSC Xena platform~\cite{xena2020,tcga2012brca} for six solid-tumor
+cohorts (breast, prostate, head \& neck, thyroid, lung, bladder).
+For each cohort the pipeline runs a vectorised re-implementation of
+ssGSEA against Reactome gene sets of size 10--1{,}000, yielding a
+$1{,}706 \times N_{\mathrm{cohort}}$ score matrix normalised to $[0,1]$
+row-wise (\texttt{Intermediate Dataset/}). Per-sample clinical labels
+are then bit-encoded into a single stage integer and joined with the
+score matrix to produce \texttt{Final DataSet/}, one CSV per cohort.
+We enable four of the six cohorts for supervised training; lung is
+excluded because its ssGSEA intermediate is currently byte-identical
+to breast (upstream curation issue under repair) and bladder because
+its 21 labeled samples are too few for a stratified split.
 
 \paragraph*{Multi-label phenotype.}
-We bit-encode three clinical fields into
+For each labeled sample we decode
 \(\mathrm{stage}=4\cdot\mathbf{1}[\mathrm{TMT}]+2\cdot\mathbf{1}[\mathrm{RT}]+\mathbf{1}[\mathrm{OS}\!\geq\!180\,\text{d}]\)
-and decode them back into three binary heads. Of the 1{,}218 score-matrix
-samples, 618 carry all three clinical fields and are used for supervised
-training; we drop the rest. Fig.~\ref{fig:imbalance} shows the per-head
-prevalence: TMT is heavily imbalanced (92\,\% positive), RT is balanced
-(56\,\% positive), and OS is moderately skewed (75\,\% positive). This
-motivates per-head positive-class BCE weighting (\S\ref{sec:training}).
+back into three binary heads. Per-cohort positive prevalence is shown
+in Fig.~\ref{fig:cohorts}. The four cohorts cover a wide range of
+label-distribution regimes: breast is TMT-heavy (92\,\%),
+prostate is OS-dominated and TMT-rare (97\,\% / 11\,\%), head \& neck
+is RT-leaning (64\,\%), thyroid is OS-saturated (99\,\%) and almost
+TMT-free (6\,\%). This is exactly the kind of distributional shift
+that a class-weighted BCE loss must handle.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig7_cohorts.pdf}
+\caption{Per-cohort positive prevalence of the three therapy-response
+heads, decoded from the \texttt{stage} bitfield of each cohort's
+\texttt{Final DataSet/} CSV. Counts in parentheses are
+positives/total. Lung and bladder are present in the data but disabled
+in \texttt{COHORT\_FILES} (see text); the four shown here are what the
+\texttt{-{}-cohort} flag accepts.}
+\label{fig:cohorts}
+\end{figure*}
+
+\paragraph*{Headline cohort.}
+For the trained-model results that follow (Figs.~\ref{fig:reactome}--%
+\ref{fig:cm}), we focus on the largest enabled cohort, breast cancer
+($n{=}618$). Fig.~\ref{fig:imbalance} zooms into the breast-cohort
+label balance and the resulting BCE positive-class weights; the same
+weighting scheme is applied per-cohort when the pipeline is invoked on
+prostate, head \& neck, or thyroid (\S\ref{sec:training}).
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_label_imbalance.pdf}
-\caption{Label balance and per-head positive-class BCE weighting on the
-618-sample labelled cohort. Left: positive (vermillion) and negative
-(sky blue) counts per head. Right: positive-class weight
+\caption{Breast-cohort label balance and per-head positive-class BCE
+weighting. Left: positive (vermillion) and negative (sky blue) counts
+per head. Right: positive-class weight
 $w_h{=}\#\mathrm{neg}/\#\mathrm{pos}$ used by the loss, clipped to
-$[0.1,20]$ so the TMT-positive class is down-weighted exactly enough
-to recover an effective balanced loss.}
+$[0.1,20]$ so the dominant TMT-positive class is down-weighted exactly
+enough to recover an effective balanced loss.}
 \label{fig:imbalance}
 \end{figure}
 
 \paragraph*{Splits and pre-processing.}
 A stratified 70/15/15 split (BINN) or 80/10/10 split (GraphPath, PATH;
 matching the originals) is taken on the 8-class stage variable;
-stage~2 (\emph{No}~TMT / \emph{Yes}~RT / \emph{OS}{$<$}180\,d) contains a
-single patient, so the splitter falls back to a non-stratified partition
-where necessary. Pathway scores are standardised per feature on the
+on the breast cohort stage~2 contains a single patient, so the
+splitter falls back to a non-stratified partition where necessary
+(thyroid only contains 4 of 8 stage codes, with the same fallback
+triggered). Pathway scores are standardised per feature on the
 training fold only.
 
 %--------------------------------------------------------------------
@@ -279,6 +320,13 @@ and \texttt{path/}, followed by \texttt{paper/build.sh}.
 %--------------------------------------------------------------------
 \section{Results}
 %--------------------------------------------------------------------
+
+All trained-model numbers in this section come from the breast cohort
+($n{=}618$). The same pipeline runs unchanged on prostate, head \& neck,
+and thyroid via the \texttt{-{}-cohort} flag; cross-cohort training is
+deferred to a follow-up paper because the per-cohort prevalence shifts
+of Fig.~\ref{fig:cohorts} make each cohort an interesting analysis on
+its own right rather than a stepping-stone to a single pooled number.
 
 \subsection{Reactome structure consumed by each model}
 Fig.~\ref{fig:reactome} reports the Reactome graph that each model
@@ -437,14 +485,22 @@ IRnet/PathHDNN would tighten the conclusions.
 %--------------------------------------------------------------------
 
 We placed three contemporary pathway-informed deep architectures on a
-single TCGA-BRCA substrate predicting three independent therapy-response
-phenotypes, with every figure traceable to a versioned phase-pipeline
-artifact. The architectural ranking is phenotype-specific (PATH for TMT,
-BINN for OS, none for RT) and the Reactome immune-system subtree
-dominates the importance signals across all three models. We hope the
-framework lowers the friction of cross-architecture comparison for the
-systems-immunology community: dropping a new pathway-aware model into
-the same five-phase CLI is the single PR away.
+multi-cohort TCGA substrate (breast, prostate, head \& neck, thyroid)
+predicting three independent therapy-response phenotypes, with every
+figure traceable to a versioned phase-pipeline artifact. On the
+breast-cancer headline cohort the architectural ranking is
+phenotype-specific (PATH for TMT, BINN for OS, none for RT) and the
+Reactome immune-system subtree dominates the importance signals across
+all three models. The cross-cohort label-prevalence shifts of
+Fig.~\ref{fig:cohorts} suggest that the architectural ranking itself
+will be cohort-specific --- an OS-saturated cohort like thyroid leaves
+almost no negative-class signal for the survival head, while a
+TMT-rare cohort like prostate flips the imbalance direction of the
+breast TMT head. Re-running the same pipeline with
+\texttt{-{}-cohort prostate}, \texttt{head\_neck}, or \texttt{thyroid}
+is a one-flag change; we frame the resulting pan-cancer comparison as
+the natural follow-up, and we hope the framework lowers the friction
+of cross-architecture comparison for the systems-immunology community.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
