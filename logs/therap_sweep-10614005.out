@@ -1,0 +1,1189 @@
+[sweep] module load python/3.11  →  Python 3.11.11
+[sweep] CUDA module cuda/12.1 not available
+[sweep] repo : /work/mech-ai-scratch/tirtho/TherapAgent
+[sweep] venv : /work/mech-ai-scratch/tirtho/TherapAgent/.venv-therap
+[sweep] node : nova18-gpu-1
+[sweep] gpu  : 0
+[sweep] resume mode : 0
+[sweep] torch  : 2.4.1+cu118  (CUDA build 11.8)
+[sweep] CUDA   : available=True
+[sweep] device : Tesla V100-PCIE-32GB  CC 7.0
+[sweep] CUDA kernel probe OK
+[sweep] paper-conformance check: binn
+[sweep] paper-conformance check: graphpath
+[sweep] paper-conformance check: path
+
+[sweep] ════════════ cohort = breast ════════════
+[sweep] binn × breast  → starting
+cohort           : breast
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Breast_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Breast_Cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/binn/artifacts/breast
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  joblib     : 1.5.3
+  wrote LaTeX table → binn/artifacts/breast/tex/01_environment.tex
+
+PHASE 2: Reactome hierarchy
+  pathway rows in scores CSV     : 1706
+  matched pathway nodes          : 1686 / 1706 (20 missing)
+  layer 0                       : 1686 nodes
+  layer 1                       : 656 nodes
+  layer 2                       : 306 nodes
+  layer 3                       : 163 nodes
+  mask  0→1                  : (656, 1686) (active edges=1719)
+  mask  1→2                  : (306, 656) (active edges=679)
+  mask  2→3                  : (163, 306) (active edges=317)
+  saved checkpoint → binn/artifacts/breast/reactome.pkl
+  wrote LaTeX table → binn/artifacts/breast/tex/02_reactome_layers.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1218
+  scores.csv pathways            : 1706
+  mapping.csv labeled samples    : 618
+  intersection (used by model)   : 618
+  X shape                        : (618, 1686)
+  Y shape                        : (618, 3)
+  split (n)                      : train=432  val=93  test=93
+  pos weights (train)            : TMT=0.10, RT=0.80, OS=0.34
+  saved checkpoint → binn/artifacts/breast/splits.npz
+  wrote LaTeX tables → binn/artifacts/breast/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  layer sizes                    : [1686, 656, 306, 163]
+  active params                  : 14,535
+  ep   1 *  train 0.3658  val 0.3525  lr 1.0e-03
+  ep   2 *  train 0.3355  val 0.3505  lr 1.0e-03
+  ep   3 *  train 0.3240  val 0.3498  lr 1.0e-03
+  ep   4 *  train 0.3116  val 0.3481  lr 1.0e-03
+  ep   5    train 0.3063  val 0.3511  lr 1.0e-03
+  ep   6 *  train 0.3022  val 0.3477  lr 1.0e-03
+  ep  10    train 0.2794  val 0.3503  lr 1.0e-03
+  ep  15    train 0.2595  val 0.3540  lr 5.0e-04
+  ep  20    train 0.2517  val 0.3573  lr 5.0e-04
+  ep  25    train 0.2435  val 0.3569  lr 2.5e-04
+  early stop @ epoch 26
+  saved checkpoint → binn/artifacts/breast/binn.pt
+  wrote LaTeX table → binn/artifacts/breast/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.27   0.695   0.972   0.967   0.935     0    6    0   87    87    6
+  RT     0.25   0.556   0.651   0.727   0.581     2   39    0   52    52   41
+  OS     0.33   0.693   0.832   0.872   0.785     5   19    1   68    69   24
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.27   0.600   0.876   0.919   0.849     0   14    0   79    79   14
+  RT     0.25   0.575   0.648   0.708   0.548     0   40    2   51    53   40
+  OS     0.33   0.667   0.838   0.846   0.742     3   19    5   66    71   22
+  saved results → binn/artifacts/breast/results.json
+  wrote LaTeX table → binn/artifacts/breast/tex/05_metrics.tex
+  saved pathway importance → binn/artifacts/breast/importance.npz
+
+[sweep] binn × breast  done in 7s
+[sweep] graphpath × breast  → starting
+cohort           : breast
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Breast_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Breast_Cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/graphpath/artifacts/breast
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → graphpath/artifacts/breast/tex/01_environment.tex
+
+PHASE 2: Reactome pathway-pathway adjacency
+  pathway rows in scores CSV     : 1706
+  downloading https://reactome.org/download/current/ReactomePathways.txt
+  downloading https://reactome.org/download/current/ReactomePathwaysRelation.txt
+  matched pathways               : 1686 (missing 20)
+  undirected edges               : 4672
+  degree min/mean/max            : 0 / 5.54 / 29
+  siblings included              : True
+  saved checkpoint → graphpath/artifacts/breast/reactome.pkl
+  wrote LaTeX table → graphpath/artifacts/breast/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1218
+  mapping.csv labeled samples    : 618
+  intersection (used by model)   : 618
+  X shape                        : (618, 1686)
+  Y shape                        : (618, 3)
+  split (n)                      : train=494 val=62 test=62
+  pos weights                    : TMT=0.10, RT=0.80, OS=0.34
+  wrote LaTeX tables → graphpath/artifacts/breast/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1686
+  trainable params               : 125,894
+  ep   1 *  train 0.3588  val 0.3559  lr 5.0e-02
+  ep   4 *  train 0.3512  val 0.3558  lr 5.0e-02
+  ep   5 *  train 0.3535  val 0.3555  lr 5.0e-02
+  ep  10    train 0.3588  val 0.3575  lr 5.0e-02
+  ep  15    train 0.3591  val 0.3565  lr 2.5e-02
+  ep  20    train 0.3584  val 0.3564  lr 2.5e-02
+  ep  25    train 0.3582  val 0.3561  lr 1.3e-02
+  ep  30    train 0.3583  val 0.3561  lr 1.3e-02
+  early stop @ epoch 30
+  saved checkpoint → graphpath/artifacts/breast/graphpath.pt
+  wrote LaTeX table → graphpath/artifacts/breast/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.52   0.578   0.964   0.967   0.935     0    4    0   58    58    4
+  RT     0.45   0.486   0.616   0.722   0.565     0   27    0   35    35   27
+  OS     0.47   0.718   0.888   0.885   0.806     4   11    1   46    47   15
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.52   0.528   0.849   0.893   0.806     0   12    0   50    50   12
+  RT     0.45   0.516   0.586   0.722   0.565     0   27    0   35    35   27
+  OS     0.47   0.607   0.817   0.870   0.774     1   14    0   47    47   15
+  saved results → graphpath/artifacts/breast/results.json
+  wrote LaTeX table → graphpath/artifacts/breast/tex/05_metrics.tex
+  saved pathway importance → graphpath/artifacts/breast/importance.npz
+
+[sweep] graphpath × breast  done in 36s
+[sweep] path × breast  → starting
+cohort           : breast
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Breast_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Breast_Cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/path/artifacts/breast
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → path/artifacts/breast/tex/01_environment.tex
+
+PHASE 2: Reactome Jaccard adjacency
+  pathway rows in scores CSV     : 1706
+  downloading https://reactome.org/download/current/ReactomePathways.gmt.zip
+  matched pathways               : 1431 (missing 275)
+  undirected edges               : 243210
+  max Jaccard (after norm)       : 1.000
+  median pathway gene-set size   : 42
+  degree min/mean/max            : 7 / 339.9 / 1270
+  saved checkpoint → path/artifacts/breast/reactome.pkl
+  wrote LaTeX table → path/artifacts/breast/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1218
+  mapping.csv labeled samples    : 618
+  intersection (used by model)   : 618
+  X shape                        : (618, 1431)
+  Y shape                        : (618, 3)
+  split (n)                      : train=494 val=62 test=62
+  pos weights                    : TMT=0.10, RT=0.80, OS=0.34
+  wrote LaTeX tables → path/artifacts/breast/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1431
+  transformer layers / heads     : 2 / 4
+  trainable params               : 4,295,292
+  ep   1 *  train 0.3694  val 0.3606  lr 1.0e-04
+  ep   5    train 0.3628  val 0.3663  lr 1.0e-04
+  ep  10    train 0.3574  val 0.3657  lr 1.0e-04
+  ep  15    train 0.3558  val 0.3622  lr 5.0e-05
+  ep  20    train 0.3473  val 0.3626  lr 5.0e-05
+  ep  25 *  train 0.3462  val 0.3606  lr 2.5e-05
+  ep  30    train 0.3475  val 0.3626  lr 2.5e-05
+  ep  31 *  train 0.3460  val 0.3569  lr 2.5e-05
+  ep  35    train 0.3415  val 0.3613  lr 2.5e-05
+  ep  40    train 0.3403  val 0.3608  lr 2.5e-05
+  ep  43 *  train 0.3365  val 0.3569  lr 1.3e-05
+  ep  44 *  train 0.3414  val 0.3564  lr 1.3e-05
+  ep  45    train 0.3414  val 0.3582  lr 1.3e-05
+  ep  50    train 0.3384  val 0.3589  lr 1.3e-05
+  ep  55    train 0.3363  val 0.3598  lr 6.3e-06
+  ep  60    train 0.3311  val 0.3589  lr 6.3e-06
+  ep  65    train 0.3312  val 0.3585  lr 6.3e-06
+  early stop @ epoch 69
+  saved checkpoint → path/artifacts/breast/path.pt
+  wrote LaTeX table → path/artifacts/breast/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.37   0.315   0.896   0.967   0.935     0    4    0   58    58    4
+  RT     0.16   0.587   0.670   0.722   0.565     0   27    0   35    35   27
+  OS     0.38   0.726   0.900   0.870   0.774     1   14    0   47    47   15
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.37   0.635   0.872   0.901   0.823     1   11    0   50    50   12
+  RT     0.16   0.554   0.587   0.729   0.581     1   26    0   35    35   27
+  OS     0.38   0.549   0.801   0.868   0.774     2   13    1   46    47   15
+  saved results → path/artifacts/breast/results.json
+  wrote LaTeX table → path/artifacts/breast/tex/05_metrics.tex
+  saved pathway importance → path/artifacts/breast/importance.npz
+
+[sweep] path × breast  done in 166s
+>> regenerating binn/artifacts/breast/tex/
+>> regenerating graphpath/artifacts/breast/tex/
+>> regenerating path/artifacts/breast/tex/
+>> wrote top-pathways table for breast → /work/mech-ai-scratch/tirtho/TherapAgent/paper/artifacts/tex/06_top_pathways_breast.tex
+>> done.
+
+[sweep] ════════════ cohort = lung ════════════
+[sweep] binn × lung  → starting
+cohort           : lung
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Lung_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Lung_cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/binn/artifacts/lung
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  joblib     : 1.5.3
+  wrote LaTeX table → binn/artifacts/lung/tex/01_environment.tex
+
+PHASE 2: Reactome hierarchy
+  pathway rows in scores CSV     : 1706
+  matched pathway nodes          : 1686 / 1706 (20 missing)
+  layer 0                       : 1686 nodes
+  layer 1                       : 656 nodes
+  layer 2                       : 306 nodes
+  layer 3                       : 163 nodes
+  mask  0→1                  : (656, 1686) (active edges=1719)
+  mask  1→2                  : (306, 656) (active edges=679)
+  mask  2→3                  : (163, 306) (active edges=317)
+  saved checkpoint → binn/artifacts/lung/reactome.pkl
+  wrote LaTeX table → binn/artifacts/lung/tex/02_reactome_layers.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1129
+  scores.csv pathways            : 1706
+  mapping.csv labeled samples    : 970
+  intersection (used by model)   : 970
+  X shape                        : (970, 1686)
+  Y shape                        : (970, 3)
+  split (n)                      : train=678  val=146  test=146
+  pos weights (train)            : TMT=2.20, RT=7.58, OS=0.13
+  saved checkpoint → binn/artifacts/lung/splits.npz
+  wrote LaTeX tables → binn/artifacts/lung/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  layer sizes                    : [1686, 656, 306, 163]
+  active params                  : 14,535
+  ep   1 *  train 0.8084  val 0.8376  lr 1.0e-03
+  ep   2 *  train 0.7455  val 0.8332  lr 1.0e-03
+  ep   5    train 0.6938  val 0.8548  lr 1.0e-03
+  ep  10    train 0.6474  val 0.8683  lr 5.0e-04
+  ep  15    train 0.6190  val 0.9165  lr 5.0e-04
+  ep  20    train 0.6004  val 0.9061  lr 2.5e-04
+  early stop @ epoch 22
+  saved checkpoint → binn/artifacts/lung/binn.pt
+  wrote LaTeX table → binn/artifacts/lung/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.47   0.564   0.385   0.528   0.486    29   67    8   42    50   96
+  RT     0.48   0.571   0.175   0.370   0.603    71   53    5   17    22  124
+  OS     0.35   0.489   0.904   0.950   0.904     0   14    0  132   132   14
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.47   0.527   0.363   0.484   0.445    27   70   11   38    49   97
+  RT     0.48   0.498   0.180   0.235   0.466    56   67   11   12    23  123
+  OS     0.35   0.452   0.891   0.938   0.884     0   17    0  129   129   17
+  saved results → binn/artifacts/lung/results.json
+  wrote LaTeX table → binn/artifacts/lung/tex/05_metrics.tex
+  saved pathway importance → binn/artifacts/lung/importance.npz
+
+[sweep] binn × lung  done in 8s
+[sweep] graphpath × lung  → starting
+cohort           : lung
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Lung_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Lung_cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/graphpath/artifacts/lung
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → graphpath/artifacts/lung/tex/01_environment.tex
+
+PHASE 2: Reactome pathway-pathway adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1686 (missing 20)
+  undirected edges               : 4672
+  degree min/mean/max            : 0 / 5.54 / 29
+  siblings included              : True
+  saved checkpoint → graphpath/artifacts/lung/reactome.pkl
+  wrote LaTeX table → graphpath/artifacts/lung/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1129
+  mapping.csv labeled samples    : 970
+  intersection (used by model)   : 970
+  X shape                        : (970, 1686)
+  Y shape                        : (970, 3)
+  split (n)                      : train=776 val=97 test=97
+  pos weights                    : TMT=2.08, RT=7.43, OS=0.12
+  wrote LaTeX tables → graphpath/artifacts/lung/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1686
+  trainable params               : 125,894
+  ep   1 *  train 0.8231  val 0.7768  lr 5.0e-02
+  ep   5    train 23.6307  val 17.6918  lr 5.0e-02
+  ep  10    train 11.9699  val 24.7282  lr 2.5e-02
+  ep  15    train 0.8358  val 0.7866  lr 2.5e-02
+  ep  20    train 0.7694  val 0.7886  lr 1.3e-02
+  ep  25    train 0.7716  val 0.7887  lr 1.3e-02
+  early stop @ epoch 26
+  saved checkpoint → graphpath/artifacts/lung/graphpath.pt
+  wrote LaTeX table → graphpath/artifacts/lung/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.50   0.515   0.268   0.447   0.567    38   35    7   17    24   73
+  RT     0.54   0.608   0.177   0.348   0.536    40   43    2   12    14   83
+  OS     0.46   0.471   0.883   0.940   0.887     0   11    0   86    86   11
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.50   0.481   0.410   0.429   0.505    31   31   17   18    35   62
+  RT     0.54   0.598   0.330   0.329   0.495    36   43    6   12    18   79
+  OS     0.46   0.385   0.810   0.928   0.866     0   13    0   84    84   13
+  saved results → graphpath/artifacts/lung/results.json
+  wrote LaTeX table → graphpath/artifacts/lung/tex/05_metrics.tex
+  saved pathway importance → graphpath/artifacts/lung/importance.npz
+
+[sweep] graphpath × lung  done in 45s
+[sweep] path × lung  → starting
+cohort           : lung
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Lung_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Lung_cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/path/artifacts/lung
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → path/artifacts/lung/tex/01_environment.tex
+
+PHASE 2: Reactome Jaccard adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1431 (missing 275)
+  undirected edges               : 243210
+  max Jaccard (after norm)       : 1.000
+  median pathway gene-set size   : 42
+  degree min/mean/max            : 7 / 339.9 / 1270
+  saved checkpoint → path/artifacts/lung/reactome.pkl
+  wrote LaTeX table → path/artifacts/lung/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1129
+  mapping.csv labeled samples    : 970
+  intersection (used by model)   : 970
+  X shape                        : (970, 1431)
+  Y shape                        : (970, 3)
+  split (n)                      : train=776 val=97 test=97
+  pos weights                    : TMT=2.08, RT=7.43, OS=0.12
+  wrote LaTeX tables → path/artifacts/lung/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1431
+  transformer layers / heads     : 2 / 4
+  trainable params               : 4,295,292
+  ep   1 *  train 0.8006  val 0.7885  lr 1.0e-04
+  ep   3 *  train 0.7794  val 0.7874  lr 1.0e-04
+  ep   5    train 0.7792  val 0.8053  lr 1.0e-04
+  ep  10    train 0.7614  val 0.8093  lr 1.0e-04
+  ep  15    train 0.7348  val 0.8065  lr 5.0e-05
+  ep  20    train 0.6823  val 0.8041  lr 5.0e-05
+  ep  25    train 0.6300  val 0.8321  lr 2.5e-05
+  ep  30    train 0.5940  val 0.8335  lr 2.5e-05
+  ep  35    train 0.5654  val 0.8417  lr 2.5e-05
+  ep  40    train 0.5489  val 0.8573  lr 1.3e-05
+  ep  45    train 0.5367  val 0.8702  lr 1.3e-05
+  early stop @ epoch 49
+  saved checkpoint → path/artifacts/lung/path.pt
+  wrote LaTeX table → path/artifacts/lung/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.46   0.621   0.394   0.452   0.474    25   48    3   21    24   73
+  RT     0.41   0.546   0.171   0.283   0.320    18   65    1   13    14   83
+  OS     0.34   0.630   0.939   0.940   0.887     0   11    0   86    86   11
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.46   0.547   0.497   0.485   0.454    19   43   10   25    35   62
+  RT     0.41   0.455   0.180   0.320   0.299    13   66    2   16    18   79
+  OS     0.34   0.693   0.933   0.922   0.856     0   13    1   83    84   13
+  saved results → path/artifacts/lung/results.json
+  wrote LaTeX table → path/artifacts/lung/tex/05_metrics.tex
+  saved pathway importance → path/artifacts/lung/importance.npz
+
+[sweep] path × lung  done in 185s
+>> regenerating binn/artifacts/lung/tex/
+>> regenerating graphpath/artifacts/lung/tex/
+>> regenerating path/artifacts/lung/tex/
+>> wrote top-pathways table for lung → /work/mech-ai-scratch/tirtho/TherapAgent/paper/artifacts/tex/06_top_pathways_lung.tex
+>> done.
+
+[sweep] ════════════ cohort = prostate ════════════
+[sweep] binn × prostate  → starting
+cohort           : prostate
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Prostate_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Prostate_cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/binn/artifacts/prostate
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  joblib     : 1.5.3
+  wrote LaTeX table → binn/artifacts/prostate/tex/01_environment.tex
+
+PHASE 2: Reactome hierarchy
+  pathway rows in scores CSV     : 1706
+  matched pathway nodes          : 1686 / 1706 (20 missing)
+  layer 0                       : 1686 nodes
+  layer 1                       : 656 nodes
+  layer 2                       : 306 nodes
+  layer 3                       : 163 nodes
+  mask  0→1                  : (656, 1686) (active edges=1719)
+  mask  1→2                  : (306, 656) (active edges=679)
+  mask  2→3                  : (163, 306) (active edges=317)
+  saved checkpoint → binn/artifacts/prostate/reactome.pkl
+  wrote LaTeX table → binn/artifacts/prostate/tex/02_reactome_layers.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 550
+  scores.csv pathways            : 1706
+  mapping.csv labeled samples    : 496
+  intersection (used by model)   : 496
+  X shape                        : (496, 1686)
+  Y shape                        : (496, 3)
+  split (n)                      : train=346  val=75  test=75
+  pos weights (train)            : TMT=9.18, RT=7.65, OS=0.10
+  saved checkpoint → binn/artifacts/prostate/splits.npz
+  wrote LaTeX tables → binn/artifacts/prostate/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  layer sizes                    : [1686, 656, 306, 163]
+  active params                  : 14,535
+  ep   1 *  train 0.8374  val 0.8486  lr 1.0e-03
+  ep   2 *  train 0.7401  val 0.8267  lr 1.0e-03
+  ep   3 *  train 0.7034  val 0.8188  lr 1.0e-03
+  ep   4 *  train 0.6693  val 0.8014  lr 1.0e-03
+  ep   5 *  train 0.6476  val 0.7649  lr 1.0e-03
+  ep   6 *  train 0.6290  val 0.7609  lr 1.0e-03
+  ep   7 *  train 0.6041  val 0.7324  lr 1.0e-03
+  ep   8 *  train 0.6033  val 0.7065  lr 1.0e-03
+  ep   9 *  train 0.5755  val 0.6951  lr 1.0e-03
+  ep  10    train 0.5796  val 0.6997  lr 1.0e-03
+  ep  11 *  train 0.5461  val 0.6867  lr 1.0e-03
+  ep  15    train 0.4927  val 0.6933  lr 1.0e-03
+  ep  16 *  train 0.4790  val 0.6843  lr 1.0e-03
+  ep  20    train 0.4434  val 0.7364  lr 1.0e-03
+  ep  25    train 0.4048  val 0.7719  lr 5.0e-04
+  ep  30    train 0.3816  val 0.7473  lr 5.0e-04
+  ep  35    train 0.3740  val 0.7644  lr 2.5e-04
+  early stop @ epoch 36
+  saved checkpoint → binn/artifacts/prostate/binn.pt
+  wrote LaTeX table → binn/artifacts/prostate/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.71   0.865   0.519   0.609   0.880    59    5    4    7    11   64
+  RT     0.62   0.798   0.430   0.545   0.867    59    7    3    6     9   66
+  OS     0.35   0.946   0.999   0.993   0.987     0    1    0   74    74    1
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.71   0.870   0.616   0.667   0.933    65    1    4    5     9   66
+  RT     0.62   0.848   0.522   0.500   0.840    57    6    6    6    12   63
+  OS     0.35   0.811   0.997   0.958   0.920     0    1    5   69    74    1
+  saved results → binn/artifacts/prostate/results.json
+  wrote LaTeX table → binn/artifacts/prostate/tex/05_metrics.tex
+  saved pathway importance → binn/artifacts/prostate/importance.npz
+
+[sweep] binn × prostate  done in 7s
+[sweep] graphpath × prostate  → starting
+cohort           : prostate
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Prostate_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Prostate_cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/graphpath/artifacts/prostate
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → graphpath/artifacts/prostate/tex/01_environment.tex
+
+PHASE 2: Reactome pathway-pathway adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1686 (missing 20)
+  undirected edges               : 4672
+  degree min/mean/max            : 0 / 5.54 / 29
+  siblings included              : True
+  saved checkpoint → graphpath/artifacts/prostate/reactome.pkl
+  wrote LaTeX table → graphpath/artifacts/prostate/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 550
+  mapping.csv labeled samples    : 496
+  intersection (used by model)   : 496
+  X shape                        : (496, 1686)
+  Y shape                        : (496, 3)
+  split (n)                      : train=396 val=50 test=50
+  pos weights                    : TMT=7.43, RT=7.08, OS=0.10
+  wrote LaTeX tables → graphpath/artifacts/prostate/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1686
+  trainable params               : 125,894
+  ep   1 *  train 0.7950  val 0.7582  lr 5.0e-02
+  ep   5    train 0.7040  val 0.9177  lr 5.0e-02
+  ep   6 *  train 0.7412  val 0.7313  lr 5.0e-02
+  ep   7 *  train 0.7053  val 0.7309  lr 5.0e-02
+  ep  10    train 0.7496  val 1.0100  lr 5.0e-02
+  ep  15    train 0.7269  val 0.8643  lr 5.0e-02
+  ep  20    train 0.6070  val 0.8051  lr 2.5e-02
+  ep  25    train 0.5998  val 0.7691  lr 1.3e-02
+  ep  30    train 0.5182  val 0.8380  lr 1.3e-02
+  early stop @ epoch 32
+  saved checkpoint → graphpath/artifacts/prostate/graphpath.pt
+  wrote LaTeX table → graphpath/artifacts/prostate/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.28   0.594   0.070   0.138   0.500    23   25    0    2     2   48
+  RT     0.48   0.648   0.349   0.381   0.740    33   10    3    4     7   43
+  OS     0.41   0.146   0.930   0.980   0.960     0    2    0   48    48    2
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.28   0.916   0.728   0.323   0.580    24   21    0    5     5   45
+  RT     0.48   0.853   0.427   0.400   0.760    34   11    1    4     5   45
+  OS     0.41   0.959   0.999   0.969   0.940     0    1    2   47    49    1
+  saved results → graphpath/artifacts/prostate/results.json
+  wrote LaTeX table → graphpath/artifacts/prostate/tex/05_metrics.tex
+  saved pathway importance → graphpath/artifacts/prostate/importance.npz
+
+[sweep] graphpath × prostate  done in 30s
+[sweep] path × prostate  → starting
+cohort           : prostate
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Prostate_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Prostate_cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/path/artifacts/prostate
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → path/artifacts/prostate/tex/01_environment.tex
+
+PHASE 2: Reactome Jaccard adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1431 (missing 275)
+  undirected edges               : 243210
+  max Jaccard (after norm)       : 1.000
+  median pathway gene-set size   : 42
+  degree min/mean/max            : 7 / 339.9 / 1270
+  saved checkpoint → path/artifacts/prostate/reactome.pkl
+  wrote LaTeX table → path/artifacts/prostate/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 550
+  mapping.csv labeled samples    : 496
+  intersection (used by model)   : 496
+  X shape                        : (496, 1431)
+  Y shape                        : (496, 3)
+  split (n)                      : train=396 val=50 test=50
+  pos weights                    : TMT=7.43, RT=7.08, OS=0.10
+  wrote LaTeX tables → path/artifacts/prostate/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1431
+  transformer layers / heads     : 2 / 4
+  trainable params               : 4,295,292
+  ep   1 *  train 0.8744  val 0.7532  lr 1.0e-04
+  ep   2 *  train 0.8587  val 0.7492  lr 1.0e-04
+  ep   4 *  train 0.8011  val 0.7344  lr 1.0e-04
+  ep   5    train 0.8123  val 0.7503  lr 1.0e-04
+  ep  10 *  train 0.7807  val 0.7151  lr 1.0e-04
+  ep  12 *  train 0.7642  val 0.6994  lr 1.0e-04
+  ep  15    train 0.7344  val 0.7013  lr 1.0e-04
+  ep  16 *  train 0.7237  val 0.6790  lr 1.0e-04
+  ep  20    train 0.6471  val 0.7093  lr 1.0e-04
+  ep  25    train 0.5954  val 0.7316  lr 1.0e-04
+  ep  30    train 0.5264  val 0.7191  lr 5.0e-05
+  ep  35    train 0.4831  val 0.7576  lr 5.0e-05
+  ep  40    train 0.4638  val 0.7388  lr 2.5e-05
+  ep  45    train 0.4249  val 0.7416  lr 2.5e-05
+  early stop @ epoch 49
+  saved checkpoint → path/artifacts/prostate/path.pt
+  wrote LaTeX table → path/artifacts/prostate/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.55   0.865   0.183   0.364   0.860    41    7    0    2     2   48
+  RT     0.52   0.591   0.204   0.353   0.780    36    7    4    3     7   43
+  OS     0.40   0.177   0.934   0.980   0.960     0    2    0   48    48    2
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.55   0.862   0.460   0.267   0.780    37    8    3    2     5   45
+  RT     0.52   0.858   0.446   0.364   0.720    32   13    1    4     5   45
+  OS     0.40   0.653   0.992   0.958   0.920     0    1    3   46    49    1
+  saved results → path/artifacts/prostate/results.json
+  wrote LaTeX table → path/artifacts/prostate/tex/05_metrics.tex
+  saved pathway importance → path/artifacts/prostate/importance.npz
+
+[sweep] path × prostate  done in 97s
+>> regenerating binn/artifacts/prostate/tex/
+>> regenerating graphpath/artifacts/prostate/tex/
+>> regenerating path/artifacts/prostate/tex/
+>> wrote top-pathways table for prostate → /work/mech-ai-scratch/tirtho/TherapAgent/paper/artifacts/tex/06_top_pathways_prostate.tex
+>> done.
+
+[sweep] ════════════ cohort = head_neck ════════════
+[sweep] binn × head_neck  → starting
+cohort           : head_neck
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Head_Neck_Cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Head_Neck_Cancer_Final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/binn/artifacts/head_neck
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  joblib     : 1.5.3
+  wrote LaTeX table → binn/artifacts/head_neck/tex/01_environment.tex
+
+PHASE 2: Reactome hierarchy
+  pathway rows in scores CSV     : 1706
+  matched pathway nodes          : 1686 / 1706 (20 missing)
+  layer 0                       : 1686 nodes
+  layer 1                       : 656 nodes
+  layer 2                       : 306 nodes
+  layer 3                       : 163 nodes
+  mask  0→1                  : (656, 1686) (active edges=1719)
+  mask  1→2                  : (306, 656) (active edges=679)
+  mask  2→3                  : (163, 306) (active edges=317)
+  saved checkpoint → binn/artifacts/head_neck/reactome.pkl
+  wrote LaTeX table → binn/artifacts/head_neck/tex/02_reactome_layers.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 566
+  scores.csv pathways            : 1706
+  mapping.csv labeled samples    : 429
+  intersection (used by model)   : 429
+  X shape                        : (429, 1686)
+  Y shape                        : (429, 3)
+  split (n)                      : train=299  val=65  test=65
+  pos weights (train)            : TMT=1.99, RT=0.62, OS=0.10
+  saved checkpoint → binn/artifacts/head_neck/splits.npz
+  wrote LaTeX tables → binn/artifacts/head_neck/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  layer sizes                    : [1686, 656, 306, 163]
+  active params                  : 14,535
+  ep   1 *  train 0.5359  val 0.5100  lr 1.0e-03
+  ep   2 *  train 0.5021  val 0.5035  lr 1.0e-03
+  ep   5 *  train 0.4492  val 0.5020  lr 1.0e-03
+  ep   6 *  train 0.4412  val 0.5012  lr 1.0e-03
+  ep   7 *  train 0.4318  val 0.4961  lr 1.0e-03
+  ep   8 *  train 0.4217  val 0.4947  lr 1.0e-03
+  ep  10    train 0.4088  val 0.5053  lr 1.0e-03
+  ep  15    train 0.3846  val 0.5063  lr 1.0e-03
+  ep  20    train 0.3594  val 0.5099  lr 5.0e-04
+  ep  25    train 0.3470  val 0.5074  lr 2.5e-04
+  early stop @ epoch 28
+  saved checkpoint → binn/artifacts/head_neck/binn.pt
+  wrote LaTeX table → binn/artifacts/head_neck/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.43   0.591   0.387   0.545   0.538    17   27    3   18    21   44
+  RT     0.29   0.709   0.837   0.811   0.692     2   20    0   43    43   22
+  OS     0.23   0.701   0.961   0.952   0.908     0    6    0   59    59    6
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.43   0.647   0.579   0.633   0.554    11   25    4   25    29   36
+  RT     0.29   0.592   0.792   0.836   0.723     1   17    1   46    47   18
+  OS     0.23   0.483   0.927   0.960   0.923     0    5    0   60    60    5
+  saved results → binn/artifacts/head_neck/results.json
+  wrote LaTeX table → binn/artifacts/head_neck/tex/05_metrics.tex
+  saved pathway importance → binn/artifacts/head_neck/importance.npz
+
+[sweep] binn × head_neck  done in 6s
+[sweep] graphpath × head_neck  → starting
+cohort           : head_neck
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Head_Neck_Cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Head_Neck_Cancer_Final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/graphpath/artifacts/head_neck
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → graphpath/artifacts/head_neck/tex/01_environment.tex
+
+PHASE 2: Reactome pathway-pathway adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1686 (missing 20)
+  undirected edges               : 4672
+  degree min/mean/max            : 0 / 5.54 / 29
+  siblings included              : True
+  saved checkpoint → graphpath/artifacts/head_neck/reactome.pkl
+  wrote LaTeX table → graphpath/artifacts/head_neck/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 566
+  mapping.csv labeled samples    : 429
+  intersection (used by model)   : 429
+  X shape                        : (429, 1686)
+  Y shape                        : (429, 3)
+  split (n)                      : train=343 val=43 test=43
+  pos weights                    : TMT=2.04, RT=0.60, OS=0.10
+  wrote LaTeX tables → graphpath/artifacts/head_neck/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1686
+  trainable params               : 125,894
+  ep   1 *  train 0.5237  val 0.5224  lr 5.0e-02
+  ep   2 *  train 0.5190  val 0.5172  lr 5.0e-02
+  ep   3 *  train 0.5063  val 0.4978  lr 5.0e-02
+  ep   5    train 0.4942  val 0.5195  lr 5.0e-02
+  ep  10    train 0.4751  val 0.5180  lr 5.0e-02
+  ep  15    train 0.4607  val 0.5149  lr 2.5e-02
+  ep  20    train 0.4564  val 0.5130  lr 2.5e-02
+  ep  25    train 0.4475  val 0.5148  lr 1.3e-02
+  early stop @ epoch 28
+  saved checkpoint → graphpath/artifacts/head_neck/graphpath.pt
+  wrote LaTeX table → graphpath/artifacts/head_neck/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.50   0.715   0.567   0.605   0.605    13   17    0   13    13   30
+  RT     0.43   0.634   0.676   0.750   0.628     3   16    0   24    24   19
+  OS     0.34   0.506   0.926   0.951   0.907     0    4    0   39    39    4
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.50   0.732   0.812   0.712   0.605     5   14    3   21    24   19
+  RT     0.43   0.525   0.828   0.868   0.767     0    8    2   33    35    8
+  OS     0.34   0.573   0.964   0.950   0.907     1    1    3   38    41    2
+  saved results → graphpath/artifacts/head_neck/results.json
+  wrote LaTeX table → graphpath/artifacts/head_neck/tex/05_metrics.tex
+  saved pathway importance → graphpath/artifacts/head_neck/importance.npz
+
+[sweep] graphpath × head_neck  done in 24s
+[sweep] path × head_neck  → starting
+cohort           : head_neck
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Head_Neck_Cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Head_Neck_Cancer_Final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/path/artifacts/head_neck
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → path/artifacts/head_neck/tex/01_environment.tex
+
+PHASE 2: Reactome Jaccard adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1431 (missing 275)
+  undirected edges               : 243210
+  max Jaccard (after norm)       : 1.000
+  median pathway gene-set size   : 42
+  degree min/mean/max            : 7 / 339.9 / 1270
+  saved checkpoint → path/artifacts/head_neck/reactome.pkl
+  wrote LaTeX table → path/artifacts/head_neck/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 566
+  mapping.csv labeled samples    : 429
+  intersection (used by model)   : 429
+  X shape                        : (429, 1431)
+  Y shape                        : (429, 3)
+  split (n)                      : train=343 val=43 test=43
+  pos weights                    : TMT=2.04, RT=0.60, OS=0.10
+  wrote LaTeX tables → path/artifacts/head_neck/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1431
+  transformer layers / heads     : 2 / 4
+  trainable params               : 4,295,292
+  ep   1 *  train 0.5358  val 0.5262  lr 1.0e-04
+  ep   2 *  train 0.5222  val 0.5199  lr 1.0e-04
+  ep   4 *  train 0.5189  val 0.4980  lr 1.0e-04
+  ep   5    train 0.5202  val 0.5068  lr 1.0e-04
+  ep  10    train 0.5198  val 0.4986  lr 1.0e-04
+  ep  15    train 0.5138  val 0.5064  lr 5.0e-05
+  ep  20    train 0.5086  val 0.5043  lr 5.0e-05
+  ep  25    train 0.5100  val 0.5134  lr 5.0e-05
+  ep  30    train 0.5013  val 0.5082  lr 2.5e-05
+  ep  35    train 0.5040  val 0.5021  lr 2.5e-05
+  ep  40    train 0.4938  val 0.5060  lr 1.3e-05
+  ep  45    train 0.5032  val 0.5094  lr 1.3e-05
+  early stop @ epoch 49
+  saved checkpoint → path/artifacts/head_neck/path.pt
+  wrote LaTeX table → path/artifacts/head_neck/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.48   0.705   0.463   0.667   0.698    17   13    0   13    13   30
+  RT     0.38   0.555   0.575   0.762   0.651     4   15    0   24    24   19
+  OS     0.30   0.615   0.952   0.951   0.907     0    4    0   39    39    4
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.48   0.561   0.574   0.512   0.512    11    8   13   11    24   19
+  RT     0.38   0.432   0.792   0.800   0.674     1    7    7   28    35    8
+  OS     0.30   0.378   0.941   0.938   0.884     0    2    3   38    41    2
+  saved results → path/artifacts/head_neck/results.json
+  wrote LaTeX table → path/artifacts/head_neck/tex/05_metrics.tex
+  saved pathway importance → path/artifacts/head_neck/importance.npz
+
+[sweep] path × head_neck  done in 85s
+>> regenerating binn/artifacts/head_neck/tex/
+>> regenerating graphpath/artifacts/head_neck/tex/
+>> regenerating path/artifacts/head_neck/tex/
+>> wrote top-pathways table for head_neck → /work/mech-ai-scratch/tirtho/TherapAgent/paper/artifacts/tex/06_top_pathways_head_neck.tex
+>> done.
+
+[sweep] ════════════ cohort = thyroid ════════════
+[sweep] binn × thyroid  → starting
+cohort           : thyroid
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Thyroid_Cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Thyroid_Cancer_Final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/binn/artifacts/thyroid
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  joblib     : 1.5.3
+  wrote LaTeX table → binn/artifacts/thyroid/tex/01_environment.tex
+
+PHASE 2: Reactome hierarchy
+  pathway rows in scores CSV     : 1706
+  matched pathway nodes          : 1686 / 1706 (20 missing)
+  layer 0                       : 1686 nodes
+  layer 1                       : 656 nodes
+  layer 2                       : 306 nodes
+  layer 3                       : 163 nodes
+  mask  0→1                  : (656, 1686) (active edges=1719)
+  mask  1→2                  : (306, 656) (active edges=679)
+  mask  2→3                  : (163, 306) (active edges=317)
+  saved checkpoint → binn/artifacts/thyroid/reactome.pkl
+  wrote LaTeX table → binn/artifacts/thyroid/tex/02_reactome_layers.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 572
+  scores.csv pathways            : 1706
+  mapping.csv labeled samples    : 109
+  intersection (used by model)   : 109
+  X shape                        : (109, 1686)
+  Y shape                        : (109, 3)
+  split (n)                      : train=75  val=17  test=17
+  pos weights (train)            : TMT=17.75, RT=0.83, OS=0.10
+  saved checkpoint → binn/artifacts/thyroid/splits.npz
+  wrote LaTeX tables → binn/artifacts/thyroid/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  layer sizes                    : [1686, 656, 306, 163]
+  active params                  : 14,535
+  ep   1 *  train 0.6662  val 0.6541  lr 1.0e-03
+  ep   2 *  train 0.5411  val 0.6524  lr 1.0e-03
+  ep   3 *  train 0.5130  val 0.6506  lr 1.0e-03
+  ep   4 *  train 0.5013  val 0.6500  lr 1.0e-03
+  ep   5 *  train 0.4787  val 0.6487  lr 1.0e-03
+  ep  10    train 0.4261  val 0.6583  lr 1.0e-03
+  ep  15    train 0.4129  val 0.6506  lr 5.0e-04
+  ep  16 *  train 0.3817  val 0.6450  lr 5.0e-04
+  ep  17 *  train 0.3750  val 0.6403  lr 5.0e-04
+  ep  18 *  train 0.3761  val 0.6357  lr 5.0e-04
+  ep  19 *  train 0.3633  val 0.6320  lr 5.0e-04
+  ep  20 *  train 0.3770  val 0.6298  lr 5.0e-04
+  ep  21 *  train 0.3627  val 0.6271  lr 5.0e-04
+  ep  22 *  train 0.3675  val 0.6236  lr 5.0e-04
+  ep  23 *  train 0.3532  val 0.6209  lr 5.0e-04
+  ep  24 *  train 0.3619  val 0.6191  lr 5.0e-04
+  ep  25 *  train 0.3511  val 0.6162  lr 5.0e-04
+  ep  26 *  train 0.3501  val 0.6143  lr 5.0e-04
+  ep  27 *  train 0.3450  val 0.6101  lr 5.0e-04
+  ep  28 *  train 0.3358  val 0.6078  lr 5.0e-04
+  ep  29 *  train 0.3377  val 0.6072  lr 5.0e-04
+  ep  30    train 0.3438  val 0.6073  lr 5.0e-04
+  ep  35    train 0.3192  val 0.6131  lr 5.0e-04
+  ep  40    train 0.3053  val 0.6155  lr 2.5e-04
+  ep  45    train 0.2899  val 0.6219  lr 1.3e-04
+  early stop @ epoch 49
+  saved checkpoint → binn/artifacts/thyroid/binn.pt
+  wrote LaTeX table → binn/artifacts/thyroid/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.72   0.938   0.500   0.667   0.941    15    1    0    1     1   16
+  RT     0.18   0.242   0.579   0.786   0.647     0    6    0   11    11    6
+  OS     0.50     nan     nan   0.903   0.824     0    0    3   14    17    0
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.72   0.567   0.567   0.000   0.882    15    0    2    0     2   15
+  RT     0.18   0.458   0.520   0.720   0.588     1    7    0    9     9    8
+  OS     0.50     nan     nan   0.903   0.824     0    0    3   14    17    0
+  saved results → binn/artifacts/thyroid/results.json
+  wrote LaTeX table → binn/artifacts/thyroid/tex/05_metrics.tex
+  saved pathway importance → binn/artifacts/thyroid/importance.npz
+
+[sweep] binn × thyroid  done in 5s
+[sweep] graphpath × thyroid  → starting
+cohort           : thyroid
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Thyroid_Cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Thyroid_Cancer_Final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/graphpath/artifacts/thyroid
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → graphpath/artifacts/thyroid/tex/01_environment.tex
+
+PHASE 2: Reactome pathway-pathway adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1686 (missing 20)
+  undirected edges               : 4672
+  degree min/mean/max            : 0 / 5.54 / 29
+  siblings included              : True
+  saved checkpoint → graphpath/artifacts/thyroid/reactome.pkl
+  wrote LaTeX table → graphpath/artifacts/thyroid/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 572
+  mapping.csv labeled samples    : 109
+  intersection (used by model)   : 109
+  X shape                        : (109, 1686)
+  Y shape                        : (109, 3)
+  split (n)                      : train=87 val=11 test=11
+  pos weights                    : TMT=20.00, RT=0.81, OS=0.10
+  wrote LaTeX tables → graphpath/artifacts/thyroid/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1686
+  trainable params               : 125,894
+  ep   1 *  train 0.6612  val 0.8478  lr 5.0e-02
+  ep   2 *  train 0.6376  val 0.8201  lr 5.0e-02
+  ep   5 *  train 0.6147  val 0.8179  lr 5.0e-02
+  ep  10    train 0.4248  val 6.3034  lr 5.0e-02
+  ep  15    train 0.2392  val 2.8854  lr 2.5e-02
+  ep  20    train 0.4025  val 3.2160  lr 2.5e-02
+  ep  25    train 0.1535  val 3.0622  lr 1.3e-02
+  ep  30    train 0.1605  val 3.7270  lr 1.3e-02
+  early stop @ epoch 30
+  saved checkpoint → graphpath/artifacts/thyroid/graphpath.pt
+  wrote LaTeX table → graphpath/artifacts/thyroid/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.40   0.800   0.333   0.500   0.818     8    2    0    1     1   10
+  RT     0.38   0.900   0.931   0.857   0.818     3    2    0    6     6    5
+  OS     0.50     nan     nan   0.900   0.818     0    0    2    9    11    0
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.40   0.278   0.191   0.000   0.455     5    4    2    0     2    9
+  RT     0.38   0.536   0.666   0.545   0.545     3    1    4    3     7    4
+  OS     0.50     nan     nan   1.000   1.000     0    0    0   11    11    0
+  saved results → graphpath/artifacts/thyroid/results.json
+  wrote LaTeX table → graphpath/artifacts/thyroid/tex/05_metrics.tex
+  saved pathway importance → graphpath/artifacts/thyroid/importance.npz
+
+[sweep] graphpath × thyroid  done in 10s
+[sweep] path × thyroid  → starting
+cohort           : thyroid
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Thyroid_Cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Thyroid_Cancer_Final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/path/artifacts/thyroid
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.4.1+cu118
+  wrote LaTeX table → path/artifacts/thyroid/tex/01_environment.tex
+
+PHASE 2: Reactome Jaccard adjacency
+  pathway rows in scores CSV     : 1706
+  matched pathways               : 1431 (missing 275)
+  undirected edges               : 243210
+  max Jaccard (after norm)       : 1.000
+  median pathway gene-set size   : 42
+  degree min/mean/max            : 7 / 339.9 / 1270
+  saved checkpoint → path/artifacts/thyroid/reactome.pkl
+  wrote LaTeX table → path/artifacts/thyroid/tex/02_pathway_graph.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 572
+  mapping.csv labeled samples    : 109
+  intersection (used by model)   : 109
+  X shape                        : (109, 1431)
+  Y shape                        : (109, 3)
+  split (n)                      : train=87 val=11 test=11
+  pos weights                    : TMT=20.00, RT=0.81, OS=0.10
+  wrote LaTeX tables → path/artifacts/thyroid/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  pathways                       : 1431
+  transformer layers / heads     : 2 / 4
+  trainable params               : 4,295,292
+  ep   1 *  train 0.6874  val 0.8605  lr 1.0e-04
+  ep   2 *  train 0.6695  val 0.8568  lr 1.0e-04
+  ep   3 *  train 0.6365  val 0.8511  lr 1.0e-04
+  ep   4 *  train 0.6801  val 0.8439  lr 1.0e-04
+  ep   5 *  train 0.6718  val 0.8367  lr 1.0e-04
+  ep   6 *  train 0.6537  val 0.8297  lr 1.0e-04
+  ep   7 *  train 0.6884  val 0.8239  lr 1.0e-04
+  ep   8 *  train 0.6275  val 0.8197  lr 1.0e-04
+  ep  10 *  train 0.5944  val 0.8145  lr 1.0e-04
+  ep  11 *  train 0.6387  val 0.8120  lr 1.0e-04
+  ep  14 *  train 0.6028  val 0.8037  lr 1.0e-04
+  ep  15    train 0.5963  val 0.8086  lr 1.0e-04
+  ep  16 *  train 0.5896  val 0.8017  lr 1.0e-04
+  ep  18 *  train 0.5743  val 0.7984  lr 1.0e-04
+  ep  19 *  train 0.5624  val 0.7824  lr 1.0e-04
+  ep  20    train 0.5324  val 0.8106  lr 1.0e-04
+  ep  21 *  train 0.5236  val 0.7807  lr 1.0e-04
+  ep  22 *  train 0.5448  val 0.7496  lr 1.0e-04
+  ep  23 *  train 0.5203  val 0.7167  lr 1.0e-04
+  ep  25    train 0.5434  val 0.7838  lr 1.0e-04
+  ep  30    train 0.5218  val 0.7561  lr 1.0e-04
+  ep  35    train 0.4858  val 0.8108  lr 5.0e-05
+  ep  40    train 0.5163  val 0.8878  lr 5.0e-05
+  ep  45    train 0.4701  val 0.9592  lr 2.5e-05
+  early stop @ epoch 49
+  saved checkpoint → path/artifacts/thyroid/path.pt
+  wrote LaTeX table → path/artifacts/thyroid/tex/04_training_summary.tex
+
+PHASE 5: Evaluation
+
+  === VAL ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.64   0.900   0.500   0.667   0.909     9    1    0    1     1   10
+  RT     0.45   0.667   0.817   0.727   0.727     4    1    2    4     6    5
+  OS     0.50     nan     nan   0.900   0.818     0    0    2    9    11    0
+
+  === TEST ===
+  head    thr   AUROC   AUPRC      F1     Acc    TN   FP   FN   TP    n+   n-
+  TMT    0.64   0.444   0.225   0.000   0.636     7    2    2    0     2    9
+  RT     0.45   0.643   0.761   0.714   0.636     2    2    2    5     7    4
+  OS     0.50     nan     nan   0.842   0.727     0    0    3    8    11    0
+  saved results → path/artifacts/thyroid/results.json
+  wrote LaTeX table → path/artifacts/thyroid/tex/05_metrics.tex
+  saved pathway importance → path/artifacts/thyroid/importance.npz
+
+[sweep] path × thyroid  done in 27s
+>> regenerating binn/artifacts/thyroid/tex/
+>> regenerating graphpath/artifacts/thyroid/tex/
+>> regenerating path/artifacts/thyroid/tex/
+>> wrote top-pathways table for thyroid → /work/mech-ai-scratch/tirtho/TherapAgent/paper/artifacts/tex/06_top_pathways_thyroid.tex
+>> done.
+
+[sweep] rendering figures
+>> fig1_architectures.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig1_architectures.pdf
+>> fig2_metric_bars.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig2_metric_bars.pdf
+>> fig3_confusion.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig3_confusion.pdf
+>> fig4_label_imbalance.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig4_label_imbalance.pdf
+>> fig5_reactome_structure.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig5_reactome_structure.pdf
+>> fig6_training_curves.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig6_training_curves.pdf
+>> fig7_cohorts.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig7_cohorts.pdf
+>> fig8_cross_cohort.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig8_cross_cohort.pdf
+>> fig9_pathway_importance.py
+wrote /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures/fig9_pathway_importance.pdf
+>> all figures rendered into /work/mech-ai-scratch/tirtho/TherapAgent/paper/figures
+[sweep] compiling main.tex

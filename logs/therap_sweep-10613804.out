@@ -1,0 +1,57 @@
+[sweep] module load python/3.11  →  Python 3.11.11
+[sweep] CUDA module cuda/12.1 not available
+[sweep] repo : /work/mech-ai-scratch/tirtho/TherapAgent
+[sweep] venv : /work/mech-ai-scratch/tirtho/TherapAgent/.venv-therap
+[sweep] node : nova18-gpu-1
+[sweep] gpu  : 0
+[sweep] resume mode : 0
+[sweep] paper-conformance check: binn
+[sweep] paper-conformance check: graphpath
+[sweep] paper-conformance check: path
+
+[sweep] ════════════ cohort = breast ════════════
+[sweep] binn × breast  → starting
+cohort           : breast
+scores csv       : /work/mech-ai-scratch/tirtho/TherapAgent/Intermediate Dataset/Breast_cancer.csv
+mapping csv      : /work/mech-ai-scratch/tirtho/TherapAgent/Final DataSet/Breast_Cancer_final.csv
+artifacts dir    : /work/mech-ai-scratch/tirtho/TherapAgent/binn/artifacts/breast
+PHASE 1: Environment
+  Python     : 3.11.11
+  numpy      : 2.4.4
+  pandas     : 3.0.3
+  scipy      : 1.17.1
+  sklearn    : 1.8.0
+  torch      : 2.12.0+cu130
+  joblib     : 1.5.3
+  wrote LaTeX table → binn/artifacts/breast/tex/01_environment.tex
+
+PHASE 2: Reactome hierarchy
+  pathway rows in scores CSV     : 1706
+  downloading https://reactome.org/download/current/ReactomePathways.txt
+  downloading https://reactome.org/download/current/ReactomePathwaysRelation.txt
+  matched pathway nodes          : 1686 / 1706 (20 missing)
+  layer 0                       : 1686 nodes
+  layer 1                       : 656 nodes
+  layer 2                       : 306 nodes
+  layer 3                       : 163 nodes
+  mask  0→1                  : (656, 1686) (active edges=1719)
+  mask  1→2                  : (306, 656) (active edges=679)
+  mask  2→3                  : (163, 306) (active edges=317)
+  saved checkpoint → binn/artifacts/breast/reactome.pkl
+  wrote LaTeX table → binn/artifacts/breast/tex/02_reactome_layers.tex
+
+PHASE 3: Data preparation
+  scores.csv samples             : 1218
+  scores.csv pathways            : 1706
+  mapping.csv labeled samples    : 618
+  intersection (used by model)   : 618
+  X shape                        : (618, 1686)
+  Y shape                        : (618, 3)
+  split (n)                      : train=432  val=93  test=93
+  pos weights (train)            : TMT=0.10, RT=0.80, OS=0.34
+  saved checkpoint → binn/artifacts/breast/splits.npz
+  wrote LaTeX tables → binn/artifacts/breast/tex/
+
+PHASE 4: Training
+  device                         : cuda
+  layer sizes                    : [1686, 656, 306, 163]

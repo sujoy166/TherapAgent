@@ -42,3 +42,5 @@ paper/*.fdb_latexmk
 
 # Local zip templates (e.g. the IEEE template archive)
 *.zip
+.venv-therap/
+ziDV8QiF

@@ -1,0 +1,36 @@
+/work/mech-ai-scratch/tirtho/TherapAgent/.venv-therap/lib/python3.11/site-packages/torch/cuda/__init__.py:384: UserWarning: Found GPU0 Tesla V100-PCIE-32GB which is of compute capability (CC) 7.0.
+The following list shows the CCs this version of PyTorch was built for and the hardware CCs it supports:
+- 7.5 which supports hardware CC >=7.5,<8.0
+- 8.0 which supports hardware CC >=8.0,<9.0 except {8.7}
+- 8.6 which supports hardware CC >=8.6,<9.0 except {8.7}
+- 9.0 which supports hardware CC >=9.0,<10.0
+- 10.0 which supports hardware CC >=10.0,<11.0 except {10.1}
+- 12.0 which supports hardware CC >=12.0,<13.0
+Please follow the instructions at https://pytorch.org/get-started/locally/ to install a PyTorch release that supports one of these CUDA versions: 12.6
+  _warn_unsupported_code(d, device_cc, code_ccs)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/work/mech-ai-scratch/tirtho/TherapAgent/binn/main.py", line 524, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/work/mech-ai-scratch/tirtho/TherapAgent/binn/main.py", line 516, in main
+    PHASES[name](cfg)
+  File "/work/mech-ai-scratch/tirtho/TherapAgent/binn/main.py", line 329, in phase_train
+    print(f"  active params                  : {model.trainable_parameter_count():,}")
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/mech-ai-scratch/tirtho/TherapAgent/binn/model.py", line 123, in trainable_parameter_count
+    n = sum(m.n_active_params for m in self.masked_layers)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/mech-ai-scratch/tirtho/TherapAgent/binn/model.py", line 123, in <genexpr>
+    n = sum(m.n_active_params for m in self.masked_layers)
+            ^^^^^^^^^^^^^^^^^
+  File "/work/mech-ai-scratch/tirtho/TherapAgent/binn/model.py", line 48, in n_active_params
+    return int(self.mask.sum().item()) + self.out_features  # weights + bias
+               ^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

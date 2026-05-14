@@ -1,0 +1,5 @@
+[install] repo  : /work/mech-ai-scratch/tirtho/TherapAgent
+[install] venv  : /work/mech-ai-scratch/tirtho/TherapAgent/.venv-therap
+[install] module load python/3.11  →  Python 3.11.11
+[install] torch 2.12.0+cu130 | cuda False
+[install] done.
