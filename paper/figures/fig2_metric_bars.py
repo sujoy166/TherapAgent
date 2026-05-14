@@ -16,9 +16,9 @@ from _style import MODEL_COLORS, apply_style, OKABE_ITO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MODELS = {
-    "BINN":      PROJECT_ROOT / "binn"      / "artifacts" / "results.json",
-    "GraphPath": PROJECT_ROOT / "graphpath" / "artifacts" / "results.json",
-    "PATH":      PROJECT_ROOT / "path"      / "artifacts" / "results.json",
+    "BINN":      PROJECT_ROOT / "binn"      / "artifacts" / "breast" / "results.json",
+    "GraphPath": PROJECT_ROOT / "graphpath" / "artifacts" / "breast" / "results.json",
+    "PATH":      PROJECT_ROOT / "path"      / "artifacts" / "breast" / "results.json",
 }
 HEADS = ("TMT", "RT", "OS")
 METRICS = ("auroc", "auprc", "f1")

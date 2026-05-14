@@ -17,9 +17,9 @@ from _style import OKABE_ITO, apply_style, color_for
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PATHS = {
-    "BINN":      PROJECT_ROOT / "binn"      / "artifacts" / "binn.pt",
-    "GraphPath": PROJECT_ROOT / "graphpath" / "artifacts" / "graphpath.pt",
-    "PATH":      PROJECT_ROOT / "path"      / "artifacts" / "path.pt",
+    "BINN":      PROJECT_ROOT / "binn"      / "artifacts" / "breast" / "binn.pt",
+    "GraphPath": PROJECT_ROOT / "graphpath" / "artifacts" / "breast" / "graphpath.pt",
+    "PATH":      PROJECT_ROOT / "path"      / "artifacts" / "breast" / "path.pt",
 }
 
 

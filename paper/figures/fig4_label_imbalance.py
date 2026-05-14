@@ -1,6 +1,6 @@
 """Figure 4 — therapy-response label distribution and per-head positive class weight.
 
-Reads `binn/artifacts/splits.npz` if available; otherwise reproduces the
+Reads `binn/artifacts/breast/splits.npz` if available; otherwise reproduces the
 counts directly from `pathway_phenotype_mapping.csv` using stage bit-decoding.
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ import pandas as pd
 from _style import OKABE_ITO, apply_style
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SPLITS = PROJECT_ROOT / "binn" / "artifacts" / "splits.npz"
+SPLITS = PROJECT_ROOT / "binn" / "artifacts" / "breast" / "splits.npz"
 MAPPING = PROJECT_ROOT / "pathway_phenotype_mapping.csv"
 
 

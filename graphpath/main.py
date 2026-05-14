@@ -28,6 +28,8 @@ from binn.data import (
 from binn.evaluate import metrics, predict, print_report
 from binn.reporting import write_table
 
+from binn.config import COHORT_FILES
+
 from .config import Config
 from .model import GraphPath
 from .reactome import assemble
@@ -391,6 +393,9 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("phase", choices=list(PHASES.keys()) + ["all"],
                    nargs="?", default="all")
+    p.add_argument("--cohort", default="breast",
+                   choices=sorted(COHORT_FILES.keys()),
+                   help="Which TCGA cohort to train on.")
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--epochs", type=int, default=None)
     return p.parse_args()
@@ -398,13 +403,17 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    cfg = Config()
+    cfg = Config(cohort=args.cohort)
     if args.epochs is not None:
         cfg.max_epochs = args.epochs
     if args.smoke:
         cfg.max_epochs = 5
         cfg.patience = 5
     set_seed(cfg.seed)
+    print(f"cohort           : {cfg.cohort}")
+    print(f"scores csv       : {cfg.scores_csv}")
+    print(f"mapping csv      : {cfg.mapping_csv}")
+    print(f"artifacts dir    : {cfg.artifacts_dir}")
 
     if args.phase == "all":
         for name in ("env", "reactome", "data", "train", "evaluate"):

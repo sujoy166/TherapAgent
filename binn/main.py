@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .config import Config
+from .config import COHORT_FILES, Config
 from .data import (
     alignment_summary, decode_stage, fit_standardizer, list_pathway_columns,
     load_aligned, positive_weights, stratified_split,
@@ -461,6 +461,10 @@ def parse_args() -> argparse.Namespace:
         default="all",
         help="Which pipeline phase to run (default: all).",
     )
+    p.add_argument("--cohort", default="breast",
+                   choices=sorted(COHORT_FILES.keys()),
+                   help="Which TCGA cohort to train on. "
+                        "Artifacts land in binn/artifacts/<cohort>/.")
     p.add_argument("--smoke", action="store_true",
                    help="Cap epochs at 5 for a fast sanity run.")
     p.add_argument("--epochs", type=int, default=None,
@@ -472,7 +476,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    cfg = Config()
+    cfg = Config(cohort=args.cohort)
     if args.epochs is not None:
         cfg.max_epochs = args.epochs
     if args.layers is not None:
@@ -481,6 +485,10 @@ def main() -> int:
         cfg.max_epochs = 5
         cfg.patience = 5
     set_seed(cfg.seed)
+    print(f"cohort           : {cfg.cohort}")
+    print(f"scores csv       : {cfg.scores_csv}")
+    print(f"mapping csv      : {cfg.mapping_csv}")
+    print(f"artifacts dir    : {cfg.artifacts_dir}")
 
     if args.phase == "all":
         for name in ("env", "reactome", "data", "train", "evaluate"):

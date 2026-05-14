@@ -22,9 +22,9 @@ from _style import OKABE_ITO, apply_style, color_for
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PATHS = {
-    "BINN":      PROJECT_ROOT / "binn"      / "artifacts" / "reactome.pkl",
-    "GraphPath": PROJECT_ROOT / "graphpath" / "artifacts" / "reactome.pkl",
-    "PATH":      PROJECT_ROOT / "path"      / "artifacts" / "reactome.pkl",
+    "BINN":      PROJECT_ROOT / "binn"      / "artifacts" / "breast" / "reactome.pkl",
+    "GraphPath": PROJECT_ROOT / "graphpath" / "artifacts" / "breast" / "reactome.pkl",
+    "PATH":      PROJECT_ROOT / "path"      / "artifacts" / "breast" / "reactome.pkl",
 }
 
 
@@ -38,7 +38,7 @@ def _load(path: Path):
 def panel_binn(ax, r):
     color = color_for("BINN")
     if r is None:
-        ax.text(0.5, 0.5, "binn/artifacts/reactome.pkl missing",
+        ax.text(0.5, 0.5, "binn/artifacts/breast/reactome.pkl missing",
                 ha="center", va="center", transform=ax.transAxes,
                 color=OKABE_ITO["vermillion"])
         ax.set_axis_off(); return
@@ -73,7 +73,7 @@ def panel_binn(ax, r):
 def panel_graphpath(ax, r):
     color = color_for("GraphPath")
     if r is None:
-        ax.text(0.5, 0.5, "graphpath/artifacts/reactome.pkl missing",
+        ax.text(0.5, 0.5, "graphpath/artifacts/breast/reactome.pkl missing",
                 ha="center", va="center", transform=ax.transAxes,
                 color=OKABE_ITO["vermillion"])
         ax.set_axis_off(); return
@@ -101,7 +101,7 @@ def panel_graphpath(ax, r):
 def panel_path(ax, r):
     color = color_for("PATH")
     if r is None:
-        ax.text(0.5, 0.5, "path/artifacts/reactome.pkl missing",
+        ax.text(0.5, 0.5, "path/artifacts/breast/reactome.pkl missing",
                 ha="center", va="center", transform=ax.transAxes,
                 color=OKABE_ITO["vermillion"])
         ax.set_axis_off(); return

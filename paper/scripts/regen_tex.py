@@ -29,14 +29,14 @@ from binn.reporting import write_table  # noqa: E402
 HEAD_NAMES = ("TMT", "RT", "OS")
 
 
-def _load(model: str) -> dict:
-    art = PROJECT_ROOT / model / "artifacts"
+def _load(model: str, cohort: str = "breast") -> dict:
+    art = PROJECT_ROOT / model / "artifacts" / cohort
     with open(art / "reactome.pkl", "rb") as f:
         reactome = pickle.load(f)
     blob = np.load(art / "splits.npz", allow_pickle=True)
     results = json.loads((art / "results.json").read_text())
-    return {"model": model, "art": art, "reactome": reactome,
-            "blob": blob, "results": results}
+    return {"model": model, "cohort": cohort, "art": art,
+            "reactome": reactome, "blob": blob, "results": results}
 
 
 def _tex_dir(art: Path) -> Path:
@@ -292,13 +292,21 @@ def regen_metrics(ctx: dict, prefix: str, label_caption: str) -> None:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cohort", default="breast",
+                        help="Cohort subdirectory to read from "
+                             "(default: breast).")
+    args = parser.parse_args()
+    cohort = args.cohort
+
     for model, prefix, caption in [
         ("binn", "binn", "BINN."),
         ("graphpath", "gp", "GraphPath."),
         ("path", "path", "PATH."),
     ]:
-        ctx = _load(model)
-        print(f">> regenerating {model}/artifacts/tex/")
+        ctx = _load(model, cohort=cohort)
+        print(f">> regenerating {model}/artifacts/{cohort}/tex/")
         # Phase 2 — Reactome
         if model == "binn":
             regen_binn_reactome(ctx)

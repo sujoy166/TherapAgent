@@ -11,19 +11,20 @@ binn/cache/
 graphpath/cache/
 path/cache/
 
-# Generated artifacts (per-phase checkpoints; LaTeX tables are tracked separately)
-binn/artifacts/*.pkl
-binn/artifacts/*.npz
-binn/artifacts/*.pt
-binn/artifacts/results.json
-graphpath/artifacts/*.pkl
-graphpath/artifacts/*.npz
-graphpath/artifacts/*.pt
-graphpath/artifacts/results.json
-path/artifacts/*.pkl
-path/artifacts/*.npz
-path/artifacts/*.pt
-path/artifacts/results.json
+# Generated binary artifacts (per-cohort subdirectories). The LaTeX tables
+# in tex/ ARE tracked so the paper can render without retraining.
+binn/artifacts/*/*.pkl
+binn/artifacts/*/*.npz
+binn/artifacts/*/*.pt
+binn/artifacts/*/results.json
+graphpath/artifacts/*/*.pkl
+graphpath/artifacts/*/*.npz
+graphpath/artifacts/*/*.pt
+graphpath/artifacts/*/results.json
+path/artifacts/*/*.pkl
+path/artifacts/*/*.npz
+path/artifacts/*/*.pt
+path/artifacts/*/results.json
 
 # LaTeX build artifacts
 paper/*.aux
@@ -38,3 +39,6 @@ paper/*.fdb_latexmk
 
 # Mac OS
 .DS_Store
+
+# Local zip templates (e.g. the IEEE template archive)
+*.zip
