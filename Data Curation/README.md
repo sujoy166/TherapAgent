@@ -165,8 +165,9 @@ dropped: the stratified 70/15/15 split is unsafe with so few patients.
 
 ## 3. SLURM run book {#full-sweep-on-nova}
 
-The whole sweep runs on **one A100 sequentially** (cluster gives at most
-one GPU). Two-job dependency chain:
+The whole sweep runs on **one GPU sequentially** (cluster gives at most
+one GPU; `--gres=gpu:1` is type-agnostic so any available card —
+A100, A40, V100, RTX, … — is eligible). Two-job dependency chain:
 
 ```
   00_install.sbatch   →   10_sweep.sbatch
@@ -179,8 +180,8 @@ in `submit_all.sh`. Submit from anywhere; the scripts `cd` into that
 path themselves.
 
 `#SBATCH --mail-user=tirtho@iastate.edu` is baked into both sbatch
-files. Sweep wall-clock ≈ 50 min on an A100; allocation
-`--time=08:00:00`.
+files. Sweep wall-clock ≈ 50 min on an A100 (budget proportionally
+more on smaller cards); allocation `--time=08:00:00`.
 
 ### Full sweep (recommended)
 

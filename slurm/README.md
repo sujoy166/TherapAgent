@@ -2,8 +2,9 @@
 
 Two-job dependency chain that runs the full pipeline on a **single
 allocated GPU**. The training loop is sequential — 5 cohorts × 3 models
-= 15 runs that share one A100 — so the cluster only needs to schedule
-one GPU at a time.
+= 15 runs that share one GPU — so the cluster only needs to schedule
+one GPU at a time. The sweep asks for `--gres=gpu:1` (type-agnostic),
+so it lands on whichever card is available (A100, A40, V100, RTX, …).
 
 ```
 slurm/
@@ -32,7 +33,8 @@ ends up at `paper/main.pdf`.
 
 ## Wall-clock budget
 
-Sequential sweep on a single A100 (no oversubscription):
+Sequential sweep on a single A100 (no oversubscription; other cards are
+proportionally slower — A40 ≈ 1.3×, V100 ≈ 1.5×, consumer RTX ≈ 1.5–2×):
 
 | Model    | per-cohort time | × 5 cohorts |
 |----------|-----------------|-------------|

@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --gres=gpu:a100:1
+#SBATCH --gres=gpu:1
 #SBATCH --time=08:00:00
 #SBATCH --partition=nova
 #SBATCH --output=logs/therap_sweep-%j.out
@@ -18,11 +18,13 @@
 #       (paper-conformance check) -> (full pipeline) -> (regen tex)
 #   regenerate figures and compile main.pdf
 #
-# All 15 (model × cohort) runs share the one allocated GPU. Wall-clock
-# budget on an A100, including the Reactome download, ssGSEA-derived
-# data preparation, training, evaluation, and pathway-importance
-# computation, is ~80 minutes for the full sweep; --time=08:00:00 gives
-# generous headroom for the largest PATH × lung case and re-downloads.
+# All 15 (model × cohort) runs share the one allocated GPU. The
+# --gres=gpu:1 ask is type-agnostic so the job is eligible on any
+# available CUDA card (A100, A40, V100, RTX, ...). Wall-clock budget
+# on an A100 — Reactome download + ssGSEA-derived data prep +
+# training + evaluation + pathway-importance computation —
+# is ~50 minutes for the full sweep; --time=08:00:00 gives generous
+# headroom for slower cards or re-downloads.
 #
 # Submit from the repo root:
 #   THERAP_REPO=$PWD \
