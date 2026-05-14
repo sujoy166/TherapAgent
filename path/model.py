@@ -124,16 +124,17 @@ class EdgeAwareTransformerBlock(nn.Module):
         scale = 1.0 / math.sqrt(self.dh)
         logits = torch.einsum("bhpd,bhqd->bhpq", Q, K) * scale
 
-        # Edge-conditioned per-head bias φ (Eq. 14-15). edge_feat: (P,P,1)
-        # gain_h(p,q) = softplus(w_h * a_pq + b_h); φ_h(p,q) = log(gain_h + ε)
+        # Edge-conditioned bias φ (Eq. 14-15). Compute per-head softplus
+        # gains, then AVERAGE over heads (Eq. 15) so the bias added to
+        # attention is a single (P, P) tensor broadcast across heads.
         ef = edge_feat.squeeze(-1).unsqueeze(0)                  # (1, P, P)
         gain = F.softplus(self.edge_gain_w[:, None, None] * ef
-                          + self.edge_gain_b[:, None, None])     # (h, P, P)
-        phi = torch.log(gain + 1e-6)                             # (h, P, P)
+                          + self.edge_gain_b[:, None, None])     # (H, P, P)
+        phi = torch.log(gain + 1e-6).mean(dim=0)                  # (P, P) — Eq. 15
 
-        # Final mask: M_pq = m_struct + φ, broadcast over heads
-        M = struct_mask.unsqueeze(0) + phi                       # (h, P, P)
-        logits = logits + M.unsqueeze(0)                          # (B, h, P, P)
+        # Final mask (Eq. 16): M_pq = m_struct + φ, broadcast across heads
+        M = struct_mask + phi                                     # (P, P)
+        logits = logits + M                                       # broadcasts over (B, H)
 
         attn = F.softmax(logits, dim=-1)
         out = torch.einsum("bhpq,bhqd->bhpd", attn, V)            # (B, h, P, dh)

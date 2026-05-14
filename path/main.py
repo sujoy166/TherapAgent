@@ -24,7 +24,7 @@ from binn.data import (
     alignment_summary, fit_standardizer, list_pathway_columns, load_aligned,
     positive_weights, stratified_split,
 )
-from binn.evaluate import metrics, predict, print_report
+from binn.evaluate import find_best_threshold, metrics, predict, print_report
 from binn.reporting import write_table
 
 from binn.config import COHORT_FILES
@@ -360,8 +360,13 @@ def phase_evaluate(cfg: Config) -> dict:
     loaders, _ = _loaders_from_splits(cfg)
     val_p, val_y = predict(model, loaders["val"], device=device)
     test_p, test_y = predict(model, loaders["test"], device=device)
-    val_m = metrics(val_p, val_y, cfg.head_names)
-    test_m = metrics(test_p, test_y, cfg.head_names)
+
+    # F1-optimal decision thresholds learned on the validation fold are
+    # applied to the test fold (paper PATH §4.3 Eq. 27). AUROC/AUPRC
+    # remain threshold-free.
+    thresholds = find_best_threshold(val_p, val_y, cfg.head_names)
+    val_m  = metrics(val_p,  val_y,  cfg.head_names, thresholds=thresholds)
+    test_m = metrics(test_p, test_y, cfg.head_names, thresholds=thresholds)
     print_report("VAL", val_m)
     print_report("TEST", test_m)
 
