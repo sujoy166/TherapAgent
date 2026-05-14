@@ -8,9 +8,9 @@ from pathlib import Path
 #   Intermediate Dataset/<intermediate>.csv  -- 1,706 pathways x N samples
 #   Final DataSet/<final>.csv                -- N labeled samples x (sample, stage, 1706 pathway scores)
 #
-# Disabled cohorts (not in the registry):
-#   "bladder" -- Final DataSet/Bladder_cancer_final.csv only has 21 samples;
-#                too small to train a stratified split safely.
+# All five cohorts are trainable. An earlier release also shipped a
+# Bladder_cancer cohort, but it carried only 21 labeled samples and has
+# been dropped from the repository.
 COHORT_FILES: dict = {
     "breast":    ("Breast_cancer",    "Breast_Cancer_final"),
     "prostate":  ("Prostate_cancer",  "Prostate_cancer_final"),

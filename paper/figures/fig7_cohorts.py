@@ -1,15 +1,13 @@
 """Figure 7 — cross-cohort label distribution.
 
-For each of the four supported TCGA cohorts (breast, prostate, head_neck,
-thyroid), the figure reports:
+For each of the five supported TCGA cohorts (breast, prostate, head_neck,
+thyroid, lung), the figure reports:
 
   • sample count, and
   • TMT / RT / OS≥180d positive prevalence
 
 decoded from the `stage` bitfield of the per-cohort
-`Final DataSet/<Cohort>_final.csv`. The two cohorts disabled in the
-COHORT_FILES registry (lung, bladder) are explicitly *not* plotted; an
-annotation in the lower-right explains why.
+`Final DataSet/<Cohort>_final.csv`.
 """
 from __future__ import annotations
 
@@ -82,9 +80,8 @@ def main() -> None:
     axes[0].set_ylabel("Positive prevalence")
 
     fig.suptitle(
-        "Per-cohort positive prevalence of the three therapy-response heads. "
-        "Bladder ($n{=}21$) is present in the data but excluded from training "
-        "because its sample count is too low for a stratified split.",
+        "Per-cohort positive prevalence of the three therapy-response heads "
+        "decoded from the stage bitfield of each cohort.",
         fontsize=8.5, y=1.04,
     )
     fig.tight_layout()

@@ -153,18 +153,17 @@ makes the cross-architecture comparison more informative.
 
 \paragraph*{Source and curation.}
 TCGA HiSeqV2 expression and clinical matrices were retrieved from the
-UCSC Xena platform~\cite{xena2020,tcga2012brca} for six solid-tumor
-cohorts (breast, prostate, head \& neck, thyroid, lung, bladder).
+UCSC Xena platform~\cite{xena2020,tcga2012brca} for five solid-tumor
+cohorts (breast, lung, prostate, head \& neck, and thyroid).
 For each cohort the pipeline runs a vectorised re-implementation of
 ssGSEA against Reactome gene sets of size 10--1{,}000, yielding a
 $1{,}706 \times N_{\mathrm{cohort}}$ score matrix normalised to $[0,1]$
 row-wise (\texttt{Intermediate Dataset/}). Per-sample clinical labels
 are then bit-encoded into a single stage integer and joined with the
 score matrix to produce \texttt{Final DataSet/}, one CSV per cohort.
-We enable five of the six cohorts for supervised training; bladder is
-excluded because its 21 labeled samples are too few for a stratified
-split. (An earlier release of the lung dataset was a stale copy of
-breast and was disabled; we rebuilt it from \texttt{TCGA.LUNG.HiSeqV2}
+All five cohorts are trainable through a single \texttt{-{}-cohort}
+flag (\S\ref{sec:training}). (An earlier release of the lung dataset
+was a stale copy of breast; we rebuilt it from \texttt{TCGA.LUNG.HiSeqV2}
 plus \texttt{LUNG\_clinicalMatrix} so 970 unique LUAD/LUSC samples are
 now available.)
 
@@ -186,10 +185,8 @@ distributional shift that a class-weighted BCE loss must handle.
 \caption{Per-cohort positive prevalence of the three therapy-response
 heads, decoded from the \texttt{stage} bitfield of each cohort's
 \texttt{Final DataSet/} CSV. Counts in parentheses are
-positives/total. Bladder ($n{=}21$) is present in the data but disabled
-in \texttt{COHORT\_FILES} because its sample count is too low for a
-stratified train/val/test split; the five shown here are exactly what
-the \texttt{-{}-cohort} flag accepts.}
+positives/total. The five cohorts shown are exactly what the
+\texttt{-{}-cohort} flag accepts.}
 \label{fig:cohorts}
 \end{figure*}
 
