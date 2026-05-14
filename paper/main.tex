@@ -361,28 +361,17 @@ though they share the same 1{,}686 nodes.}
 \end{figure*}
 
 \subsection{Training behaviour and convergence}
-Fig.~\ref{fig:training} shows the BCE-loss trajectories. BINN converges
-fastest: training loss drops to 0.24 within 29 epochs (best-val at epoch~9),
-with a clear train/val gap that early-stopping caps before overfitting.
-GraphPath barely separates train from val (0.358 vs 0.356) and converges
-in 30 epochs --- consistent with the very small \emph{trainable} parameter
-count (the masked GAT shares weights aggressively per head). PATH trains
+BINN converges fastest (29 epochs, best-val at epoch~9), with a clear
+train/val gap that early-stopping caps before overfitting. GraphPath
+barely separates train from val (0.358 vs 0.356) and converges in 30
+epochs --- consistent with the very small trainable-parameter count
+(the masked GAT shares weights aggressively per head). PATH trains
 longest (167 epochs, best-val at 142) and shows the cleanest
 generalisation-gap shape: train and val descend together for the first
-$\sim$50 epochs before train continues to drop and val plateaus. AdamW with
-gradient clipping handles the much-larger transformer parameter count
-without instability.
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig6_training_curves.pdf}
-\caption{Per-model train (solid) and validation (dashed) BCE loss.
-The vertical dotted line marks the best-val epoch restored by early
-stopping. BINN converges in $\sim$10 epochs; GraphPath plateaus
-immediately because its trainable capacity is small; PATH needs an order
-of magnitude more epochs to exploit its larger parameter budget.}
-\label{fig:training}
-\end{figure*}
+$\sim$50 epochs before train continues to drop and val plateaus.
+AdamW with gradient clipping handles the much-larger transformer
+parameter count without instability. Per-cohort training curves are
+emitted to \texttt{figures/fig6\_training\_curves.pdf} for review.
 
 \subsection{Per-head test-set discrimination}
 Fig.~\ref{fig:bars} gives the headline result: AUROC, AUPRC, and F1 on the
@@ -441,6 +430,59 @@ diagnosis: GraphPath's OS column has 41~false negatives versus
 6~true negatives, exactly the pattern of a model that has learned to
 predict almost everyone positive. BINN and PATH on the same head split
 their errors much more symmetrically (FP/FN ratios near 1).
+
+\subsection{Biological insights: which pathways drive each head?}
+\label{sec:bio}
+
+Beyond aggregate metrics, what matters clinically is which Reactome
+pathways the trained networks rely on. We compute a model-agnostic
+post-hoc attribution
+\(
+  s_p(h) = \mathbb{E}_x\bigl[\, \bigl| x_p \cdot \partial \hat{p}_h(x) / \partial x_p \bigr|\,\bigr]
+\)
+on the held-out test set --- gradient $\times$ input, a SHAP analogue
+that approximates the Shapley value of pathway~$p$ on the prediction of
+head~$h$ for any model with a differentiable forward pass. The score is
+then min-max normalised per model so that scores from BINN, GraphPath,
+and PATH live on a comparable axis.
+
+\input{artifacts/tex/06_top_pathways_breast.tex}
+
+Three observations stand out across the three models
+(Fig.~\ref{fig:topp}, Table~\ref{tab:top-pathways-breast}):
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{TMT.} MAPK / ERK / JNK signalling pathways
+(\emph{JNK phosphorylation and activation}, \emph{MAP3K8-dependent
+MAPK1/3 activation}) carry the strongest BINN attribution; GraphPath
+emphasises translation-machinery pathways (\emph{Eukaryotic Translation
+Elongation}, \emph{Cap-dependent Translation Initiation}) and signalling
+by NOTCH1. Both signatures are coherent with the literature linking
+MAPK and translational reprogramming to targeted-therapy response in
+HER2 / ER-positive breast cancer.
+\item \textbf{RT.} All three models converge on \emph{ERK/MAPK targets}
+and \emph{Regulation of NF-$\kappa$B signaling}, both well-documented
+mediators of the DNA-damage response. The agreement across architectures
+on this head is reassuring given that the aggregate AUROC on RT is
+modest (\S Results): the models lift the same biology even when the
+prediction itself is noisy.
+\item \textbf{OS\,$\geq$\,180\,d.} \emph{ERK/MAPK targets} reappears,
+joined by chromatin-remodelling programmes (SWI/SNF, BAF complex
+formation) and pro-survival signalling (p75\,NTR via NF-$\kappa$B).
+These are programmes governing transcriptional plasticity, which is
+biologically credible as a 6-month-survival proxy.
+\end{itemize}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig9_pathway_importance.pdf}
+\caption{Top-10 Reactome pathways per head, ranked by union max
+importance across the three models on the breast cohort. Bars are
+normalised per model. Cross-model agreement (all three bars high)
+indicates a robust pathway signal; one-model spikes indicate
+architecture-specific attribution.}
+\label{fig:topp}
+\end{figure}
 
 \subsection{Pan-cancer sweep}
 Fig.~\ref{fig:cross} summarises the same three architectures on every

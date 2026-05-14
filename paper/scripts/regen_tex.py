@@ -125,8 +125,11 @@ def regen_data_tables(ctx: dict, prefix: str, full_caption: str) -> None:
 
     # alignment table — re-derive from scores.csv & mapping.csv headers
     import pandas as pd
-    scores_csv = PROJECT_ROOT / "pathway_scores.csv"
-    mapping_csv = PROJECT_ROOT / "pathway_phenotype_mapping.csv"
+    from binn.config import COHORT_FILES
+    cohort = ctx.get("cohort", "breast")
+    int_stem, fin_stem = COHORT_FILES[cohort]
+    scores_csv = PROJECT_ROOT / "Intermediate Dataset" / f"{int_stem}.csv"
+    mapping_csv = PROJECT_ROOT / "Final DataSet" / f"{fin_stem}.csv"
     score_samples = pd.read_csv(scores_csv, nrows=0).columns.tolist()[1:]
     score_pathways = pd.read_csv(scores_csv, usecols=[0]).iloc[:, 0].tolist()
     label_samples = pd.read_csv(mapping_csv, usecols=["sample", "stage"],
@@ -291,6 +294,82 @@ def regen_metrics(ctx: dict, prefix: str, label_caption: str) -> None:
     )
 
 
+def regen_top_pathways(cohort: str, k: int = 8) -> None:
+    """Emit a cross-model top-k pathway table for the given cohort.
+
+    Combines `importance.npz` from each of BINN, GraphPath, and PATH.
+    For each head we report the union top-k pathways ranked by max
+    importance across models. The same path lands in
+    `paper/artifacts/tex/06_top_pathways_<cohort>.tex`.
+    """
+    HEADS = ("TMT", "RT", "OS")
+    MODELS = (("BINN", "binn"), ("GraphPath", "graphpath"), ("PATH", "path"))
+    data = {}
+    for name, dir_ in MODELS:
+        p = PROJECT_ROOT / dir_ / "artifacts" / cohort / "importance.npz"
+        if not p.exists():
+            continue
+        blob = np.load(p, allow_pickle=True)
+        data[name] = (
+            [str(x) for x in blob["pathway_names"]],
+            {h: blob[h] for h in HEADS if h in blob.files},
+        )
+    if not data:
+        return  # nothing to emit
+    names_ref = next(iter(data.values()))[0]
+    P = len(names_ref)
+
+    rows = []
+    for head in HEADS:
+        # union ranking by max-normalised importance across models
+        mat = np.full((P, len(MODELS)), np.nan)
+        for mi, (name, _) in enumerate(MODELS):
+            if name not in data:
+                continue
+            v = data[name][1].get(head)
+            if v is None or len(v) != P:
+                continue
+            mat[:, mi] = v / (v.max() if v.max() > 0 else 1.0)
+        max_per = np.nanmax(mat, axis=1)
+        order = np.argsort(np.where(np.isfinite(max_per), max_per, -np.inf))[::-1][:k]
+        for rank, pw_idx in enumerate(order, start=1):
+            row = [head if rank == 1 else "", str(rank),
+                   names_ref[pw_idx][:55]]
+            for mi, _ in enumerate(MODELS):
+                v = mat[pw_idx, mi]
+                row.append(f"{v:.2f}" if np.isfinite(v) else "—")
+            rows.append(row)
+
+    pretty_cohort = {
+        "breast": "Breast", "lung": "Lung", "prostate": "Prostate",
+        "head_neck": "Head \\& Neck", "thyroid": "Thyroid",
+    }.get(cohort, cohort.title())
+
+    out_path = (
+        PROJECT_ROOT / "paper" / "artifacts" / "tex"
+        / f"06_top_pathways_{cohort}.tex"
+    )
+    write_table(
+        out_path,
+        headers=["Head", "Rank", "Reactome pathway",
+                 "BINN", "GraphPath", "PATH"],
+        rows=rows,
+        caption=(
+            f"Top-{k} Reactome pathways per therapy-response head on the "
+            f"{pretty_cohort} cohort, ranked by union max importance across "
+            "the three models. Importance is the test-set mean of "
+            "gradient-times-input (a SHAP analogue), "
+            "min-max normalised per model so columns are comparable. "
+            "Dashes mark models for which an importance file is not "
+            "yet on disk."
+        ),
+        label=f"top-pathways-{cohort}",
+        full_width=False,
+        align="llp{0.30\\linewidth}rrr",
+    )
+    print(f">> wrote top-pathways table for {cohort} → {out_path}")
+
+
 def main() -> None:
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
@@ -318,6 +397,8 @@ def main() -> None:
         regen_training_summary(ctx, prefix, caption)
         # Phase 5 — metrics
         regen_metrics(ctx, prefix, caption)
+    # Cross-model top-pathway table (Biological Insights section)
+    regen_top_pathways(cohort)
     print(">> done.")
 
 

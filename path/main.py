@@ -398,7 +398,23 @@ def phase_evaluate(cfg: Config) -> dict:
         label="path-metrics",
     )
     print(f"  wrote LaTeX table → {(_tex_dir(cfg) / '05_metrics.tex').relative_to(cfg.project_root)}")
-    return {"val": val_m, "test": test_m}
+
+    # ── Pathway importance (gradient × input attribution) ───────────
+    from binn.interpret import compute_all_heads, save_importance
+    # Re-load splits to get the test tensor in input-space, then
+    # compute |x · ∂prob/∂x| per pathway per head (gradient × input,
+    # a SHAP-analogous post-hoc attribution).
+    blob = np.load(_splits_path(cfg), allow_pickle=True)
+    X_test = torch.from_numpy(blob["X"][blob["test_idx"]]).float().to(device)
+    head_importance = compute_all_heads(model, X_test, cfg.head_names)
+    imp_path = cfg.artifacts_dir / "importance.npz"
+    save_importance(imp_path,
+                    head_importance,
+                    pathway_names=ckpt["input_names"])
+    print(f"  saved pathway importance → "
+          f"{imp_path.relative_to(cfg.project_root)}")
+    return {"val": val_m, "test": test_m,
+            "importance": head_importance}
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────
