@@ -27,7 +27,7 @@ THERAP_REPO="${THERAP_REPO:-$PWD}"
 THERAP_VENV="${THERAP_VENV:-$THERAP_REPO/.venv-therap}"
 # Default email for the project owner. Override at submit:
 #   THERAP_SLURM_EMAIL=other@example.com bash slurm/submit_all.sh
-THERAP_SLURM_EMAIL="${THERAP_SLURM_EMAIL:-tirtho@iasatete.edu}"
+THERAP_SLURM_EMAIL="${THERAP_SLURM_EMAIL:-tirtho@iastate.edu}"
 
 export THERAP_REPO THERAP_VENV THERAP_SLURM_EMAIL
 

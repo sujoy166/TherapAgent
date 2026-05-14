@@ -10,7 +10,7 @@
 #SBATCH --output=logs/therap_sweep-%j.out
 #SBATCH --error=logs/therap_sweep-%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=tirtho@iasatete.edu
+#SBATCH --mail-user=tirtho@iastate.edu
 
 # Single-GPU sequential sweep:
 #   for each cohort:

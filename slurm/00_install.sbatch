@@ -9,7 +9,7 @@
 #SBATCH --output=logs/therap_install-%j.out
 #SBATCH --error=logs/therap_install-%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=tirtho@iasatete.edu
+#SBATCH --mail-user=tirtho@iastate.edu
 
 # One-time environment setup for the TherapAgent training sweep.
 # Submit from the repo root:
