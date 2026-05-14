@@ -8,7 +8,8 @@ PY="${PYTHON:-python3}"
 
 for f in fig1_architectures.py fig2_metric_bars.py fig3_confusion.py \
          fig4_label_imbalance.py fig5_reactome_structure.py \
-         fig6_training_curves.py fig7_cohorts.py; do
+         fig6_training_curves.py fig7_cohorts.py \
+         fig8_cross_cohort.py; do
     echo ">> $f"
     "$PY" "$f"
 done

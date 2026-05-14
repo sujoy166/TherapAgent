@@ -442,6 +442,31 @@ diagnosis: GraphPath's OS column has 41~false negatives versus
 predict almost everyone positive. BINN and PATH on the same head split
 their errors much more symmetrically (FP/FN ratios near 1).
 
+\subsection{Pan-cancer sweep}
+Fig.~\ref{fig:cross} summarises the same three architectures on every
+enabled cohort. The figure is generated automatically from each
+cohort's \texttt{results.json} and is therefore always in sync with the
+training artifacts checked into the repository; cells corresponding to
+runs that have not yet been completed are absent from the bars (a
+caption note enumerates the still-pending combinations). The pan-cancer
+view confirms the headline finding from breast: the architectural
+ranking is phenotype-specific, but the magnitude of each model's per-head
+advantage is cohort-specific. Thyroid OS, for example, saturates so
+heavily that all three models converge to near-perfect AUROC, while
+prostate TMT is so rare that BINN, GraphPath, and PATH all dip below
+chance.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig8_cross_cohort.pdf}
+\caption{Pan-cancer summary: held-out test-set AUROC for each
+(model, cohort, head) cell. Dotted line marks chance. Bars in
+Okabe--Ito colours (BINN blue, GraphPath orange, PATH green). The
+figure regenerates from the per-cohort \texttt{results.json} every
+build, so partial sweeps are visible.}
+\label{fig:cross}
+\end{figure*}
+
 %--------------------------------------------------------------------
 \section{Discussion}
 %--------------------------------------------------------------------
