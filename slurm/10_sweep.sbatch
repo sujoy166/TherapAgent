@@ -10,6 +10,7 @@
 #SBATCH --output=logs/therap_sweep-%j.out
 #SBATCH --error=logs/therap_sweep-%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=tirtho@iasatete.edu
 
 # Single-GPU sequential sweep:
 #   for each cohort:
@@ -43,12 +44,33 @@ THERAP_TECTONIC="${THERAP_TECTONIC:-tectonic}"
 THERAP_RESUME="${THERAP_RESUME:-0}"
 
 # ── Load Python + CUDA + activate venv ─────────────────────────────────
-if command -v module >/dev/null 2>&1; then
-    module purge
-    module load "$THERAP_PYTHON_MODULE"
-    if [[ "${THERAP_LOAD_CUDA:-1}" == "1" ]]; then
-        module load "$THERAP_CUDA_MODULE" || true
+# Robust python/3.11 loader: try the configured module name, then the
+# common HPC variants, then fall back to system python3. The venv built
+# by 00_install.sbatch is already pinned, so we only need the right
+# python3 binary on PATH here.
+load_python_module() {
+    if ! command -v module >/dev/null 2>&1; then
+        echo "[sweep] no 'module' command — using system python3"
+        return 0
     fi
+    module purge
+    local cand
+    for cand in \
+        "$THERAP_PYTHON_MODULE" \
+        python/3.11 python/3.11.7 python/3.11.5 python/3.11.4 \
+        python-3.11 Python/3.11 py-python/3.11 python3/3.11; do
+        if module load "$cand" >/dev/null 2>&1; then
+            echo "[sweep] module load $cand  →  $(python3 --version 2>&1)"
+            return 0
+        fi
+    done
+    echo "[sweep] WARNING: no python/3.11 module found; using system python3" >&2
+}
+load_python_module
+if [[ "${THERAP_LOAD_CUDA:-1}" == "1" ]] && command -v module >/dev/null 2>&1; then
+    module load "$THERAP_CUDA_MODULE" 2>/dev/null \
+        && echo "[sweep] module load $THERAP_CUDA_MODULE" \
+        || echo "[sweep] CUDA module $THERAP_CUDA_MODULE not available"
 fi
 # shellcheck disable=SC1091
 source "$THERAP_VENV/bin/activate"

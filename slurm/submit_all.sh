@@ -25,12 +25,9 @@ set -euo pipefail
 
 THERAP_REPO="${THERAP_REPO:-$PWD}"
 THERAP_VENV="${THERAP_VENV:-$THERAP_REPO/.venv-therap}"
-THERAP_SLURM_EMAIL="${THERAP_SLURM_EMAIL:-}"
-
-if [[ -z "$THERAP_SLURM_EMAIL" ]]; then
-    echo "Set THERAP_SLURM_EMAIL=you@example.com so SLURM can send you BEGIN/END/FAIL mail." >&2
-    exit 2
-fi
+# Default email for the project owner. Override at submit:
+#   THERAP_SLURM_EMAIL=other@example.com bash slurm/submit_all.sh
+THERAP_SLURM_EMAIL="${THERAP_SLURM_EMAIL:-tirtho@iasatete.edu}"
 
 export THERAP_REPO THERAP_VENV THERAP_SLURM_EMAIL
 

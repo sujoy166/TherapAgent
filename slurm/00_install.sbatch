@@ -9,6 +9,7 @@
 #SBATCH --output=logs/therap_install-%j.out
 #SBATCH --error=logs/therap_install-%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=tirtho@iasatete.edu
 
 # One-time environment setup for the TherapAgent training sweep.
 # Submit from the repo root:
@@ -28,12 +29,30 @@ THERAP_PYTHON_MODULE="${THERAP_PYTHON_MODULE:-python/3.11}"
 echo "[install] repo  : $THERAP_REPO"
 echo "[install] venv  : $THERAP_VENV"
 
-# Nova-style module load. Falls back to whichever python3 is on PATH if
-# `module` is not available (e.g. running this script locally).
-if command -v module >/dev/null 2>&1; then
+# Load a Python 3.11 module. Tries the user-specified module first, then
+# the most common Nova / HPC naming variants, and finally falls back to
+# whatever `python3` is on PATH. Always picks 3.11 if available because
+# our torch/pandas wheels are pinned to that minor.
+load_python_module() {
+    if ! command -v module >/dev/null 2>&1; then
+        echo "[install] no 'module' command — using system python3 ($(python3 --version 2>&1))"
+        return 0
+    fi
     module purge
-    module load "$THERAP_PYTHON_MODULE"
-fi
+    local cand
+    for cand in \
+        "$THERAP_PYTHON_MODULE" \
+        python/3.11 python/3.11.7 python/3.11.5 python/3.11.4 \
+        python-3.11 Python/3.11 py-python/3.11 python3/3.11; do
+        if module load "$cand" >/dev/null 2>&1; then
+            echo "[install] module load $cand  →  $(python3 --version 2>&1)"
+            return 0
+        fi
+    done
+    echo "[install] WARNING: no python/3.11 module found; falling back to system python3" >&2
+    return 1
+}
+load_python_module
 
 cd "$THERAP_REPO"
 python3 -m venv "$THERAP_VENV"
