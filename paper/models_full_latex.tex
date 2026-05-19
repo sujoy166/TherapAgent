@@ -1,0 +1,143 @@
+\section{Models}\label{sec:methods}
+
+We evaluate three biologically informed deep learning architectures on the task of predicting therapy-response phenotypes from pathway-level transcriptomic profiles. All three models share a common input representation: one standardised ssGSEA score per Reactome-matched pathway (1,706 pathways in total). Each model is trained with a multi-task objective consisting of class-weighted binary cross-entropy applied to three binary prediction heads, corresponding to the phenotypes TMT, RT, and OS $\geq 180$\,d. Data preprocessing and train/validation/test splits are held identical across all models to ensure a fair comparison.
+
+The three architectures differ exclusively in how biological structure is encoded as an inductive bias. BINN imposes the Reactome parent-child hierarchy as sparse masked-linear layers. GraphPath encodes pathway--pathway adjacency---encompassing both parent-child and sibling relationships---within a fixed-mask graph attention network. PATH replaces binary adjacency with a continuous Jaccard-similarity graph and augments a Graph Transformer with Laplacian positional encodings and edge-conditioned attention biases. Figure~\ref{fig:archs} shows the three pipelines side-by-side. In what follows, we describe each model in detail.
+
+\subsection{BINN --- Sparse Reactome Hierarchy}
+
+\paragraph{Architecture Overview.}
+BINN integrates the Reactome parent-child hierarchy directly into the network architecture by imposing sparse masked-linear connections between layers, together with auxiliary classification heads at each depth of the hierarchy. This design ensures that gradient signals reach every intermediate node during training, making the attribution of predictions to biological pathways well-posed.
+
+\paragraph{Pathway Hierarchy.}
+Starting from 1,706 Reactome-matched input pathways, the model traverses parent-child edges upward through three hidden layers, yielding a four-layer network with dimensions:
+\begin{equation}
+1{,}706 \to 656 \to 306 \to 163.
+\end{equation}
+Pathways that terminate before the maximum depth are copied forward, ensuring that every pathway is represented at every layer.
+
+\paragraph{Sparse Masked Weights.}
+Between consecutive layers $\ell$ and $\ell+1$, the Reactome hierarchy defines a binary connectivity mask $M^{(\ell)} \in \{0,1\}^{|L_{\ell+1}| \times |L_\ell|}$, where:
+\begin{equation}
+M^{(\ell)}_{ij} = 1 \iff \text{node } j \text{ in layer } \ell \text{ is a Reactome child of node } i \text{ in layer } \ell+1,
+\end{equation}
+or node $j$ is a terminal node copied forward to position $i$. Weights are initialised using Kaiming uniform initialisation and are zeroed outside the mask prior to the first forward pass. Sparsity is enforced throughout training via the elementwise product $W^{(\ell)} \odot M^{(\ell)}$.
+
+\paragraph{Forward Pass.}
+Each hidden block applies the masked linear transformation followed by Tanh activation, Batch Normalisation, and Dropout ($p = 0.2$):
+\begin{equation}
+h^{(\ell+1)} = \text{Dropout}\!\left(\text{BN}\!\left(\tanh\!\left(\left(W^{(\ell)} \odot M^{(\ell)}\right) h^{(\ell)} + b^{(\ell)}\right)\right)\right).
+\end{equation}
+
+\paragraph{Multi-Layer Supervision.}
+An auxiliary classifier head $\text{Linear}(|L_\ell| \to 3)$ is attached after every layer, including the raw input ($\ell = 0$), producing three logits per layer. The final predicted probability for head $h$ is computed as the mean of all four sigmoid outputs:
+\begin{equation}
+\hat{p}_h(x) = \frac{1}{4} \sum_{\ell=0}^{3} \sigma\!\left(H^{(\ell)}(h^{(\ell)})[h]\right),
+\end{equation}
+where $H^{(\ell)}$ denotes the classifier attached to layer $\ell$. Attaching a loss signal at every depth ensures that every intermediate node receives direct supervision, which is a prerequisite for meaningful gradient-$\times$-input attribution across the hierarchy.
+
+\subsection{GraphPath --- Multi-Head Graph Attention}
+
+\paragraph{Architecture Overview.}
+GraphPath treats the 1,706 Reactome pathways as nodes in a graph, encodes pathway--pathway adjacency as a fixed binary mask, and updates node embeddings through a multi-head graph attention network (GAT). From a systems biology perspective, pathways are not independent functional units; rather, they interact and co-regulate one another to produce complex phenotypes. GraphPath operationalises this view by allowing each pathway to aggregate information from its immediate neighbours before being passed to the classification layer.
+
+\paragraph{Pathway Adjacency Graph.}
+A symmetric binary adjacency matrix $A \in \{0,1\}^{N \times N}$ is constructed such that:
+\begin{equation}
+A_{pq} = 1 \iff \text{pathways } p \text{ and } q \text{ share a Reactome parent-child relationship or a common parent (siblings).}
+\end{equation}
+This yields 4,672 undirected edges with a mean node degree of 5.5. Self-loops are added so that each node can attend to its own embedding during message passing.
+
+\paragraph{Input Projection.}
+Each scalar ssGSEA score $x_p$ is projected to a $d$-dimensional embedding ($d = 64$) via a shared weight matrix $W_{\text{proj}} \in \mathbb{R}^{1 \times d}$ and a pathway-specific bias $b_p \in \mathbb{R}^d$, followed by Tanh activation:
+\begin{equation}
+h^{(0)}_p = \tanh\!\left(x_p \cdot W_{\text{proj}} + b_p\right).
+\end{equation}
+The pathway-specific bias allows the model to account for baseline differences in pathway activity across the gene sets, while the shared projection weight preserves parameter efficiency.
+
+\paragraph{Multi-Head Graph Attention.}
+Node embeddings are updated by a single multi-head GAT layer with $K = 3$ attention heads and ELU output activation. For each head $k$, the attention coefficient from node $j$ to node $i$ is computed as:
+\begin{equation}
+\alpha^{(k)}_{ij} = \text{softmax}_{j \in \mathcal{N}(i)}\,\text{LeakyReLU}_{0.2}\!\left(a^{(k)\top}\!\left[W^{(k)}h_i \,\|\, W^{(k)}h_j\right]\right).
+\end{equation}
+Non-edges ($A_{ij} = 0$) are masked to $-\infty$ prior to the softmax operation, confining attention to biologically annotated neighbours. Attention dropout ($p = 0.4$) is applied during training. The per-head embeddings are concatenated to yield a node representation of dimension $K \cdot d$.
+
+\paragraph{Readout and Classification.}
+A shared $\text{Linear}(Kd \to 1)$ layer followed by Tanh collapses each node to a scalar readout. The resulting $N$-dimensional vector is then passed through a single fully-connected layer that maps it to three binary head logits, followed by sigmoid activation.
+
+\subsection{PATH --- Edge-Aware Graph Transformer}
+
+\paragraph{Architecture Overview.}
+PATH moves beyond binary adjacency by constructing a weighted pathway graph derived from gene-set overlap, and augments a Graph Transformer with Laplacian positional encodings and learnable edge-conditioned attention biases. This design allows the model to represent graded biological similarity between pathways and, crucially, to re-weight or partially rewire the prior graph when the data warrant it.
+
+\paragraph{Weighted Pathway Adjacency.}
+The edge weight between pathways $p$ and $q$ is defined as the Jaccard similarity of their Reactome gene memberships:
+\begin{equation}
+A_{pq} = \frac{|G_p \cap G_q|}{|G_p \cup G_q|}, \quad |G_p| \geq 15,
+\end{equation}
+computed from the Reactome GMT file and renormalised to $[0,1]$. Only pathways with at least 15 annotated member genes qualify as nodes, yielding 1,431 nodes, 243,210 weighted edges, and a mean node degree of 339.9. The dense connectivity reflects the substantial gene-set overlap characteristic of the Reactome hierarchy and motivates the use of a soft structural mask rather than hard adjacency truncation.
+
+\paragraph{Input Projection and Positional Encoding.}
+Because the dataset consists solely of pathway-level ssGSEA scores, PATH's original Stage~1 (FiLM-modulated gene embeddings) and Stage~2 (intra-pathway attention pooling) are replaced by the same per-pathway scalar projection used in GraphPath: a shared weight and pathway-specific bias project each score to $\mathbb{R}^d$ ($d = 64$), followed by Tanh activation.
+
+Laplacian positional encodings are then added to endow the model with awareness of each node's position within the weighted graph. Formally, the top-$k = 16$ non-trivial eigenvectors of the symmetrically normalised Laplacian $L = I - D^{-1/2}AD^{-1/2}$ are concatenated with the normalised node degree $\deg(p)/(N + \epsilon)$, forming a $(k+1)$-dimensional positional feature per node. These features are projected to $\mathbb{R}^d$ via a learnable linear layer and added to the node embeddings prior to the transformer stack. During training, the sign of each eigenvector is randomly flipped independently per epoch to resolve sign ambiguity.
+
+\paragraph{Edge-Aware Transformer Blocks.}
+PATH employs $L = 2$ successive transformer blocks, each computing scaled dot-product multi-head self-attention ($H = 4$ heads) augmented by two structural biases.
+
+\emph{Soft structural mask.} Rather than strictly enforcing the graph topology, non-edges are heavily but softly down-weighted:
+\begin{equation}
+m^{(\text{struct})}_{pq} = \begin{cases} 0 & \text{if } A_{pq} > 0 \text{ or } p = q, \\ -10 & \text{otherwise.} \end{cases}
+\end{equation}
+Keeping non-edges gradient-reachable allows the model to rewire the prior graph when the data provide sufficient evidence, without discarding the biological prior entirely.
+
+\emph{Edge-conditioned attention bias.} A learnable per-layer scalar edge feature is aggregated over attention heads to produce a continuous bias on the attention logits:
+\begin{equation}
+\phi^{(\ell)}_{pq} = \frac{1}{H} \sum_{h=1}^{H} \log \text{softplus}\!\left(w^{(\ell)}_h\, e^{(\ell)}_{pq} + b^{(\ell)}_h\right) + \epsilon,
+\end{equation}
+where $e^{(\ell)}_{pq}$ is initialised from the Jaccard adjacency weight. The combined bias $m^{(\text{struct})}_{pq} + \phi^{(\ell)}_{pq}$ is added to the raw attention logits before the softmax, grounding the attention mechanism in biological pathway similarity while permitting data-driven refinement.
+
+Following attention, a residual-wrapped GELU feed-forward network (expansion factor 4) with per-token Batch Normalisation updates node features. A parallel two-layer MLP with Batch Normalisation updates edge features between transformer blocks.
+
+\paragraph{Readout and Classification.}
+Node tokens are collapsed to a graph-level embedding via attention-weighted readout:
+\begin{equation}
+g = \sum_{p} w_p\, x_p^{(L)}, \quad w_p = \text{softmax}_p\!\left(v^\top \tanh\!\left(U x_p^{(L)}\right)\right),
+\end{equation}
+where $U \in \mathbb{R}^{d \times (d/2)}$ and $v \in \mathbb{R}^{d/2}$ are learnable parameters. This soft attention over nodes allows the model to identify the subset of pathways most informative for predicting the three phenotype outcomes. The graph embedding $g$ is then passed through a classification head:
+\begin{equation}
+\text{Linear}(d \to d) \to \text{BN} \to \text{GELU} \to \text{Dropout}(p=0.2) \to \text{Linear}(d \to 3),
+\end{equation}
+producing three binary head logits.
+
+\subsection{Loss, Training, and Reproducibility}
+
+\paragraph{Objective Function.}
+All three models minimise a per-head class-weighted binary cross-entropy loss on the three-bit phenotype label. Positive-class weights are computed on the training fold as $w_h = \#\text{neg}_h\,/\,\#\text{pos}_h$ and clipped to $[0.1,\,20]$ to prevent extreme imbalance from destabilising training. For BINN, the loss is applied to the averaged sigmoid outputs. For GraphPath and PATH, the loss is applied directly to raw logits via \texttt{F.binary\_cross\_entropy\_with\_logits} for numerical stability.
+
+\paragraph{Optimisers and Learning Rate Schedules.}
+Optimiser choices follow each reference implementation:
+
+\begin{table}[!h]
+\centering
+\small
+\caption{Optimiser configuration per model.}
+\label{tab:optimisers}
+\begin{tabular}{lcccc}
+\toprule
+Model & Optimiser & LR & Weight Decay & Batch Size \\
+\midrule
+BINN & Adam & $10^{-3}$ & $10^{-3}$ & 32 \\
+GraphPath & SGD (momentum 0.9) & $5 \times 10^{-2}$ & $5 \times 10^{-2}$ & 32 \\
+PATH & AdamW & $10^{-4}$ & $5 \times 10^{-4}$ & 16 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three models employ ReduceLROnPlateau scheduling on validation loss, with a reduction factor of 0.5 and plateau patience of 7, 8, and 10 epochs for BINN, GraphPath, and PATH respectively.
+
+\paragraph{Early Stopping.}
+Training is terminated when validation loss fails to improve for 20 consecutive epochs (BINN) or 25 consecutive epochs (GraphPath, PATH). For PATH, a minimum of 25 training epochs is required before the patience counter activates, preventing premature termination during the characteristically slow initial convergence of the transformer stack. The checkpoint achieving the lowest validation loss is restored prior to evaluation.
+
+\paragraph{Reproducibility.}
+All models are implemented in PyTorch 2.0, with scikit-learn used for metric computation. Random seeds are fixed identically across Python, NumPy, and PyTorch (seed $= 42$) for all models and cohorts. All figures reported in this study are regenerated by executing \texttt{scripts/run\_all.sh} within the \texttt{binn/}, \texttt{graphpath/}, and \texttt{path/} directories, followed by \texttt{paper/build.sh}.
