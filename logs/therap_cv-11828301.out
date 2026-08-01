@@ -1,0 +1,98 @@
+[cv] repo  : /work/mech-ai-scratch/tirtho/TherapAgent
+[cv] venv  : /work/mech-ai-scratch/tirtho/TherapAgent/.venv-therap
+[cv] node  : nova18-gpu-4
+[cv] gpu   : 0
+[cv] seeds : 0 1 2 3 4
+[cv] torch 2.4.1+cu118 cuda True
+
+[cv] ═══════════════ seed = 0 ═══════════════
+[cv] skip binn x breast (seed 0) — snapshot present
+[cv] skip graphpath x breast (seed 0) — snapshot present
+[cv] skip path x breast (seed 0) — snapshot present
+[cv] skip binn x lung (seed 0) — snapshot present
+[cv] skip graphpath x lung (seed 0) — snapshot present
+[cv] skip path x lung (seed 0) — snapshot present
+[cv] skip binn x prostate (seed 0) — snapshot present
+[cv] skip graphpath x prostate (seed 0) — snapshot present
+[cv] skip path x prostate (seed 0) — snapshot present
+[cv] skip binn x head_neck (seed 0) — snapshot present
+[cv] skip graphpath x head_neck (seed 0) — snapshot present
+[cv] skip path x head_neck (seed 0) — snapshot present
+[cv] skip binn x thyroid (seed 0) — snapshot present
+[cv] skip graphpath x thyroid (seed 0) — snapshot present
+[cv] skip path x thyroid (seed 0) — snapshot present
+
+[cv] ═══════════════ seed = 1 ═══════════════
+[cv] skip binn x breast (seed 1) — snapshot present
+[cv] skip graphpath x breast (seed 1) — snapshot present
+[cv] skip path x breast (seed 1) — snapshot present
+[cv] skip binn x lung (seed 1) — snapshot present
+[cv] skip graphpath x lung (seed 1) — snapshot present
+[cv] skip path x lung (seed 1) — snapshot present
+[cv] skip binn x prostate (seed 1) — snapshot present
+[cv] skip graphpath x prostate (seed 1) — snapshot present
+[cv] skip path x prostate (seed 1) — snapshot present
+[cv] skip binn x head_neck (seed 1) — snapshot present
+[cv] skip graphpath x head_neck (seed 1) — snapshot present
+[cv] skip path x head_neck (seed 1) — snapshot present
+[cv] skip binn x thyroid (seed 1) — snapshot present
+[cv] skip graphpath x thyroid (seed 1) — snapshot present
+[cv] skip path x thyroid (seed 1) — snapshot present
+
+[cv] ═══════════════ seed = 2 ═══════════════
+[cv] skip binn x breast (seed 2) — snapshot present
+[cv] skip graphpath x breast (seed 2) — snapshot present
+[cv] skip path x breast (seed 2) — snapshot present
+[cv] skip binn x lung (seed 2) — snapshot present
+[cv] skip graphpath x lung (seed 2) — snapshot present
+[cv] skip path x lung (seed 2) — snapshot present
+[cv] skip binn x prostate (seed 2) — snapshot present
+[cv] skip graphpath x prostate (seed 2) — snapshot present
+[cv] skip path x prostate (seed 2) — snapshot present
+[cv] skip binn x head_neck (seed 2) — snapshot present
+[cv] skip graphpath x head_neck (seed 2) — snapshot present
+[cv] skip path x head_neck (seed 2) — snapshot present
+[cv] skip binn x thyroid (seed 2) — snapshot present
+[cv] skip graphpath x thyroid (seed 2) — snapshot present
+[cv] skip path x thyroid (seed 2) — snapshot present
+
+[cv] ═══════════════ seed = 3 ═══════════════
+[cv] skip binn x breast (seed 3) — snapshot present
+[cv] skip graphpath x breast (seed 3) — snapshot present
+[cv] skip path x breast (seed 3) — snapshot present
+[cv] skip binn x lung (seed 3) — snapshot present
+[cv] skip graphpath x lung (seed 3) — snapshot present
+[cv] skip path x lung (seed 3) — snapshot present
+[cv] skip binn x prostate (seed 3) — snapshot present
+[cv] skip graphpath x prostate (seed 3) — snapshot present
+[cv] skip path x prostate (seed 3) — snapshot present
+[cv] skip binn x head_neck (seed 3) — snapshot present
+[cv] skip graphpath x head_neck (seed 3) — snapshot present
+[cv] skip path x head_neck (seed 3) — snapshot present
+[cv] skip binn x thyroid (seed 3) — snapshot present
+[cv] skip graphpath x thyroid (seed 3) — snapshot present
+[cv] skip path x thyroid (seed 3) — snapshot present
+
+[cv] ═══════════════ seed = 4 ═══════════════
+[cv] skip binn x breast (seed 4) — snapshot present
+[cv] skip graphpath x breast (seed 4) — snapshot present
+[cv] skip path x breast (seed 4) — snapshot present
+[cv] skip binn x lung (seed 4) — snapshot present
+[cv] skip graphpath x lung (seed 4) — snapshot present
+[cv] skip path x lung (seed 4) — snapshot present
+[cv] skip binn x prostate (seed 4) — snapshot present
+[cv] skip graphpath x prostate (seed 4) — snapshot present
+[cv] skip path x prostate (seed 4) — snapshot present
+[cv] skip binn x head_neck (seed 4) — snapshot present
+[cv] skip graphpath x head_neck (seed 4) — snapshot present
+[cv] skip path x head_neck (seed 4) — snapshot present
+[cv] skip binn x thyroid (seed 4) — snapshot present
+[cv] skip graphpath x thyroid (seed 4) — snapshot present
+[cv] skip path x thyroid (seed 4) — snapshot present
+[aggregate] seeds = [0, 1, 2, 3, 4]
+  wrote results_cv/summary.json
+  wrote results_cv/cv_table.tex
+  wrote results_cv/boot_tests.tex
+[aggregate] done.
+
+[cv] complete. Aggregated table → results_cv/cv_table.tex

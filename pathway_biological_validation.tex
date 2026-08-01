@@ -1,0 +1,309 @@
+\documentclass[11pt,a4paper]{article}
+
+%% Packages
+\usepackage[landscape, margin=1.8cm, top=2cm, bottom=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[activate=false]{microtype}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage[
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  urlcolor=NavyBlue,
+  citecolor=NavyBlue,
+  pdftitle={Biological Validation of Top Pathway Importance Findings},
+]{hyperref}
+
+%% ── Colour-blind-friendly palette (Paul Tol "bright" + IBM accessible) ───────
+%% All hues distinguishable under deuteranopia, protanopia, tritanopia.
+
+\definecolor{NavyBlue}    {HTML}{1B3A6B}
+\definecolor{MidBlue}     {HTML}{2B5BA8}
+\definecolor{BorderGrey}  {HTML}{BBBBBB}
+\definecolor{SubtleGrey}  {HTML}{666666}
+\definecolor{White}       {HTML}{FFFFFF}
+\definecolor{TextDark}    {HTML}{222222}
+\definecolor{AccentVerd}  {HTML}{117733}   % dark green for "Supported" text
+\definecolor{HeaderBg}    {HTML}{333333}   % near-black main header
+
+%% TMT group — blue family  (#4477AA Tol bright-blue, lightened)
+\definecolor{TMTheadBg}   {HTML}{4477AA}   % header band
+\definecolor{TMTrow}      {HTML}{D6E4F2}   % row fill
+\definecolor{TMTquote}    {HTML}{BDD4E8}   % quote cell (slightly deeper)
+
+%% RT group  — orange family (#EE7733 Tol bright-orange, lightened)
+\definecolor{RTheadBg}    {HTML}{CC6600}   % header band
+\definecolor{RTrow}       {HTML}{FAE5C8}   % row fill
+\definecolor{RTquote}     {HTML}{F5D0A0}   % quote cell
+
+%% OS group  — green family (#228833 Tol bright-green, lightened)
+\definecolor{OSheadBg}    {HTML}{228833}   % header band
+\definecolor{OSrow}       {HTML}{D2EDD7}   % row fill
+\definecolor{OSquote}     {HTML}{B3DDB9}   % quote cell
+
+%% ── Section styling ──────────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{NavyBlue}}{}{0em}{}[%
+  \vspace{-4pt}\textcolor{MidBlue}{\rule{\linewidth}{0.6pt}}]
+
+%% ── tcolorbox ────────────────────────────────────────────────────────────────
+\tcbuselibrary{skins,breakable}
+
+%% ── Column types ─────────────────────────────────────────────────────────────
+\newcolumntype{N}{>{\centering\arraybackslash\small}p{0.45cm}}
+\newcolumntype{P}{>{\centering\arraybackslash\small}p{2.3cm}}
+\newcolumntype{C}{>{\centering\arraybackslash\small}p{1.3cm}}
+\newcolumntype{H}{>{\centering\arraybackslash\small}p{1.6cm}}
+\newcolumntype{Q}{>{\RaggedRight\arraybackslash\footnotesize\itshape}p{9.2cm}}
+\newcolumntype{L}{>{\RaggedRight\arraybackslash\footnotesize}p{8.8cm}}
+\newcolumntype{V}{>{\centering\arraybackslash\small\bfseries\color{AccentVerd}}p{1.7cm}}
+
+%% ── Group separator row ──────────────────────────────────────────────────────
+\newcommand{\grouprow}[2]{%
+  \multicolumn{7}{>{\columncolor{#1}}l}{%
+    \hspace{6pt}\textbf{\color{White}\small #2}%
+  }\\[-2pt]
+}
+
+\begin{document}
+\setstretch{1.15}
+
+%% ── Title ────────────────────────────────────────────────────────────────────
+\begin{center}
+{\LARGE\bfseries\color{NavyBlue}
+Biological Validation of Pathway Importance Findings from\\[4pt]
+Pathway-Informed Deep Learning Models Across Solid Tumour Cohorts}\\[7pt]
+{\large\color{MidBlue}
+Supplementary Evidence Table~S1 --- TherapAgent Benchmark Study (ACM-BCB \textquotesingle26)}\\[5pt]
+{\normalsize\color{SubtleGrey}
+TCGA Pan-Cancer Cohorts ($n = 2{,}622$)
+$\;\cdot\;$ Reactome Pathway Analysis (1,706 pathways)
+$\;\cdot\;$ BINN \& GraphPath Architectures}\\[5pt]
+\textcolor{BorderGrey}{\rule{\linewidth}{1.2pt}}
+\end{center}
+
+\vspace{4pt}
+
+%% ── Colour legend ─────────────────────────────────────────────────────────────
+\begin{center}
+\small
+\colorbox{TMTheadBg}{\color{White}\textbf{\ \ TMT\ \ }}\ Targeted Molecular Therapy
+\qquad
+\colorbox{RTheadBg}{\color{White}\textbf{\ \ RT\ \ \ }}\ Radiation Therapy
+\qquad
+\colorbox{OSheadBg}{\color{White}\textbf{\ \ OS\ \ \ }}\ Overall Survival ($\geq$\,180 days)
+\\[3pt]
+{\footnotesize\color{SubtleGrey}
+Colours follow the Paul Tol colour-blind-safe palette (blue / orange / green),
+distinguishable under deuteranopia, protanopia, and tritanopia.}
+\end{center}
+
+\vspace{6pt}
+
+%% ── Table ────────────────────────────────────────────────────────────────────
+\section*{Table~S1.\enspace Biological Validation of Top-Ranked Pathway Importance Scores
+  by Clinical Prediction Head and Cancer Cohort}
+
+\begingroup
+\small
+\setlength{\arrayrulewidth}{0.4pt}
+\arrayrulecolor{BorderGrey}
+\renewcommand{\arraystretch}{1.65}
+
+\begin{longtable}{N P C H Q L V}
+
+%% ── Column header (first page) ───────────────────────────────────────────────
+\rowcolor{HeaderBg}
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{0.45cm}}{\#} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{2.3cm}}{Pathway} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{1.3cm}}{Clinical Head} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{1.6cm}}{Cancer Cohort} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{9.2cm}}{Evidence Quote} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{8.8cm}}{Paper Reference and Link} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{1.7cm}}{Verdict}
+\\[2pt]
+\midrule
+\endfirsthead
+
+\multicolumn{7}{l}{\small\itshape\color{SubtleGrey}%
+  Table~S1 continued --- Biological Validation of Top Pathway Importance Findings}\\[2pt]
+\rowcolor{HeaderBg}
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{0.45cm}}{\#} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{2.3cm}}{Pathway} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{1.3cm}}{Clinical Head} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{1.6cm}}{Cancer Cohort} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{9.2cm}}{Evidence Quote} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{8.8cm}}{Paper Reference and Link} &
+\multicolumn{1}{>{\centering\arraybackslash\bfseries\color{White}\small}p{1.7cm}}{Verdict}
+\\[2pt]
+\midrule
+\endhead
+
+\midrule
+\multicolumn{7}{r}{\small\itshape\color{SubtleGrey}Continued on next page\ldots}
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+%% ═══════════════════════════════════════════════════════════════════
+%%  GROUP 1 — TMT  (blue)
+%% ═══════════════════════════════════════════════════════════════════
+\grouprow{TMTheadBg}{Group 1 \textbar{} Targeted Molecular Therapy (TMT)}\\[1pt]
+
+\rowcolor{TMTrow}
+1 &
+ERK/MAPK Targets &
+TMT &
+Lung &
+\cellcolor{TMTquote}``The MAPK pathway (Ras, Raf, and MEK) has recently been discovered to be
+a feasible target for innovative cancer therapy\ldots\ Targeting the Ras/Raf/MEK/ERK pathway
+is a promising and alternative method in NSCLC treatment.'' &
+\textbf{Everything Old Is New Again: Drug Repurposing Approach for NSCLC Targeting MAPK Signaling Pathway}
+\newline
+Sisinthy \& Bhatt. \textit{Frontiers in Oncology}, 2021.
+\newline
+\url{https://doi.org/10.3389/fonc.2021.741326} &
+\textbf{Supported} \\[3pt]
+
+%% ═══════════════════════════════════════════════════════════════════
+%%  GROUP 2 — RT  (orange)
+%% ═══════════════════════════════════════════════════════════════════
+\grouprow{RTheadBg}{Group 2 \textbar{} Radiation Therapy (RT)}\\[1pt]
+
+\rowcolor{RTrow}
+2 &
+Receptor-Mediated Mitophagy &
+RT &
+Breast &
+\cellcolor{RTquote}``Mitophagy had an important role in maintaining hypoxia-induced
+radioresistance\ldots\ By interacting with Parkin, p53 inhibited the translocation of Parkin
+to the mitochondria, disrupting the protective mitophagy process.'' &
+\textbf{TAT-ODD-p53 Enhances Radiosensitivity of Hypoxic Breast Cancer Cells by Inhibiting Parkin-Mediated Mitophagy}
+\newline
+Zheng et al. \textit{Oncotarget}, 2015.
+\newline
+\url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4627318/} &
+\textbf{Supported} \\[3pt]
+
+\rowcolor{RTrow}
+3 &
+ERK/MAPK Targets &
+RT &
+Head \& Neck &
+\cellcolor{RTquote}``We and others have shown that the MAPK/ERK axis plays a significant
+role in the development of radioresistance in HNSCC. IR mediates pathway activation, which
+leads to reduced radiosensitivity.'' &
+\textbf{Adaptive ERK Signalling Activation in Response to Therapy and In Silico Prognostic Evaluation of EGFR-MAPK in HNSCC}
+\newline
+Binder et al. \textit{British Journal of Cancer}, 2020.
+\newline
+\url{https://doi.org/10.1038/s41416-020-0892-9} &
+\textbf{Supported} \\[3pt]
+
+\rowcolor{RTrow}
+4 &
+VEGFR2-Mediated Vascular Permeability &
+RT &
+Lung &
+\cellcolor{RTquote}``Molecular inhibition of VEGFR2 could enhance tumor radiation response
+through molecular targeting of tumor vasculature. Paracrine signaling from host VEGF to
+cancer cell VEGFR2 might be a significant component of RT failures.'' &
+\textbf{MiR-200c Increases the Radiosensitivity of NSCLC Cell Line A549 by Targeting VEGF-VEGFR2 Pathway}
+\newline
+Ge et al. \textit{PLoS ONE}, 2013.
+\newline
+\url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3813610/} &
+\textbf{Supported} \\[3pt]
+
+\rowcolor{RTrow}
+5 &
+Receptor-Mediated Mitophagy &
+RT &
+Prostate &
+\cellcolor{RTquote}``Autophagy contributes to radioresistance by limiting the generation
+of reactive oxygen species (ROS) from dysfunctional mitochondria, clearing radiation-induced
+damaged macromolecules, and recycling cellular components to sustain the ATP and nucleotide
+pools required for DNA repair.'' &
+\textbf{Androgen Receptor Contributes to Radioresistance Through DNA Repair and Autophagy in AR-Positive Prostate Cancer Cells}
+\newline
+Kudo et al. \textit{bioRxiv}, 2025.
+\newline
+\url{https://doi.org/10.64898/2025.12.03.690226} &
+\textbf{Supported} \\[3pt]
+
+%% ═══════════════════════════════════════════════════════════════════
+%%  GROUP 3 — OS  (green)
+%% ═══════════════════════════════════════════════════════════════════
+\grouprow{OSheadBg}{Group 3 \textbar{} Overall Survival $\geq$ 6 Months (OS)}\\[1pt]
+
+\rowcolor{OSrow}
+6 &
+ERK/MAPK Targets &
+OS &
+Lung &
+\cellcolor{OSquote}``p-ERK1/2-positive expression was an independent prognostic factor for
+poor overall survival (OS) in NSCLC patients on both univariate analysis.'' &
+\textbf{Prognostic Values of ERK1/2 and p-ERK1/2 Expressions for Poor Survival in Non-Small Cell Lung Cancer}
+\newline
+Zhao et al. \textit{Tumor Biology}, Springer, 2015.
+\newline
+\url{https://doi.org/10.1007/s13277-015-3048-4} &
+\textbf{Supported} \\[3pt]
+
+\rowcolor{OSrow}
+7 &
+ERK/MAPK Targets &
+OS &
+Head \& Neck &
+\cellcolor{OSquote}``HNSCC patients with high intratumor expressions of p-MAPK1/3 (p-ERK1/2)
+have poor survival, and inhibition of p-ERK1/2 by MAPK pathway inhibitors often inhibited
+HNSCC cell growth in vitro.'' &
+\textbf{Precision Drugging of the MAPK Pathway in Head and Neck Cancer}
+\newline
+Fisch et al. \textit{npj Genomic Medicine}, Nature, 2022.
+\newline
+\url{https://doi.org/10.1038/s41525-022-00293-1} &
+\textbf{Supported} \\[3pt]
+
+\end{longtable}
+\endgroup
+
+\vspace{4pt}
+
+%% ── Abbreviations ────────────────────────────────────────────────────────────
+\begin{tcolorbox}[
+  enhanced,
+  colback=white,
+  colframe=BorderGrey,
+  boxrule=0.5pt,
+  arc=3pt,
+  left=6pt,right=6pt,top=5pt,bottom=5pt,
+]
+\footnotesize
+\textbf{Abbreviations.}
+\textbf{TMT} = Targeted Molecular Therapy;\quad
+\textbf{RT} = Radiation Therapy;\quad
+\textbf{OS} = Overall Survival ($\geq$\,180 days);\quad
+\textbf{HNSCC} = Head and Neck Squamous Cell Carcinoma;\quad
+\textbf{NSCLC} = Non-Small Cell Lung Cancer;\quad
+\textbf{MAPK} = Mitogen-Activated Protein Kinase;\quad
+\textbf{VEGFR2} = Vascular Endothelial Growth Factor Receptor 2;\quad
+\textbf{TCGA} = The Cancer Genome Atlas;\quad
+\textbf{ssGSEA} = Single-Sample Gene Set Enrichment Analysis.\\[3pt]
+Pathway importance scores were derived from normalised attribution weights produced by the BINN
+and GraphPath architectures following the evaluation protocol described in the manuscript.
+Evidence quotes are verbatim extracts from the cited publications.
+All DOI and PMC links are clickable in a compatible PDF viewer.
+\end{tcolorbox}
+
+\end{document}

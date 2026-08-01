@@ -1,578 +1,973 @@
-%% ASI 2026 / ACM-BCB Workshop Companion Proceedings, IEEE conference template.
-\documentclass[conference,10pt]{IEEEtran}
-\IEEEoverridecommandlockouts
-
-\usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{xcolor}
+\documentclass[sigconf]{acmart}
+\usepackage{array}
 \usepackage[inline]{enumitem}
 \usepackage{etoolbox}
-\usepackage{hyperref}
-\hypersetup{
-  colorlinks = true,
-  linkcolor  = {blue!50!black},
-  citecolor  = {blue!50!black},
-  urlcolor   = {blue!50!black},
-}
+\usepackage{makecell}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{titlesec}
+\titleformat{\subsubsection}[runin]
+  {\bfseries\itshape}
+  {\thesubsubsection}
+  {0.5em}
+  {}
 
-\title{Pathway-Informed Deep Learning for Multi-Phenotype Therapy-Response Stratification across TCGA Solid Tumors}
+% --- float placement tuning ---
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.80}
+\renewcommand{\textfraction}{0.05}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\dblfloatpagefraction}{0.80}
+\setcounter{dbltopnumber}{3}
+\raggedbottom
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
 
-\author{%
-\IEEEauthorblockN{Sujoy Banik, Koushik Howlader, Ushashi Bhattacharjee, Zainab Ghafoor,\\
-Sayantan Chakraborty, Adrito Roy, Tanusree Bhattacharjee, Tirtho Roy}
-\IEEEauthorblockA{\textit{TherapAgent Research Group}\\
-Code and reproducible artifacts: \url{https://github.com/sujoy166/TherapAgent}}
+\fancypagestyle{onlyconf}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \fancyhead[L]{\sffamily\footnotesize ICCA~'26}%
+  \fancyfoot[C]{\footnotesize\thepage}%
 }
+\pagestyle{onlyconf}
+
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\copyrightyear{2026}
+\acmYear{2026}
+\setcopyright{acmlicensed}
+\acmConference[ICCA '26]{ICCA '26}{}{}
+\acmBooktitle{ACM-BCB '26 Workshop Companion Proceedings}
+\acmDOI{10.1145/XXXXXXX.XXXXXXX}
+\acmISBN{978-1-XXXX-XXXX-X/26/XX}
 
 \begin{document}
-\maketitle
+
+\title{TRAPS: Treatment-Assignment Prediction via Pathway-informed Stratification}
+
+% \author{Sujoy Banik}
+% \affiliation{%
+%   \institution{Rajshahi University of Engineering \& Technology}
+%   \country{Bangladesh}}
+% \email{sujoybanik12109105@gmail.com}
+
+% \author{Sayantan Chakraborty}
+% \affiliation{%
+%   \institution{University of Dhaka}
+%   \country{Bangladesh}}
+% \email{sayantan-2022914514@ihe.du.ac.bd}
+
+% \author{Boishakhi Das Toma}
+% \affiliation{%
+%   \institution{American International University of Bangladesh}
+%   \country{Bangladesh}}
+% \email{tomadas2721@gmail.com}
+
+% \author{Zainab Ghafoor}
+% \affiliation{%
+%   \institution{Sonoma State University}
+%   \country{United States}}
+% \email{ghafoorz@sonoma.edu}
+
+% \author{Ushashi Bhattacharjee}
+% \affiliation{%
+%   \institution{Iowa State University}
+%   \country{United States}}
+% \email{ushashi@iastate.edu}
+
+% \author{Koushik Howlader}
+% \affiliation{%
+%   \institution{Iowa State University}
+%   \country{United States}}
+% \email{howlader@iastate.edu}
+
+% \author{Tirtho Roy}
+% \affiliation{%
+%   \institution{Iowa State University}
+%   \country{United States}}
+% \email{tirtho@iastate.edu}
+
+% \renewcommand{\shortauthors}{Banik et al.}
 
 \begin{abstract}
-Therapy decisions in solid tumors involve at least three coupled but
-distinct choices --- targeted molecular therapy (TMT), radiation therapy
-(RT), and survival prognosis --- each driven by a different cocktail of
-biological pathways, many of them immunological. We benchmark three
-contemporary pathway-informed deep architectures on a single common
-substrate: \emph{BINN} (sparse Reactome-hierarchical MLP),
-\emph{GraphPath} (multi-head graph attention over a pathway-pathway
-interaction graph), and \emph{PATH} (edge-aware Graph Transformer with
-Laplacian positional encoding). The pipeline ingests
-\emph{five TCGA cohorts} (breast $n{=}618$, lung $n{=}970$,
-prostate $n{=}496$, head \& neck $n{=}429$, thyroid $n{=}109$)
-curated through an
-identical ssGSEA-against-Reactome workflow, so the same 1{,}686-pathway
-feature vector represents every patient. A class-weighted BCE loss
-trains three independent binary heads (TMT, RT, OS\,$\geq$\,180\,d).
-The pipeline is phase-driven and emits a versioned figure per phase;
-every published number traces to a reproducible artifact. On the
-breast-cancer held-out test set the three models trade per-head wins:
-PATH leads on TMT (AUROC~0.642), BINN on OS (AUROC~0.650), and no
-model beats noise on the balanced RT head. The architectural ranking
-is therefore \emph{phenotype-specific}: structural priors matter only
-when the head they encode actually exists in the data --- and the
-cross-cohort label-prevalence profile (Fig.~\ref{fig:cohorts}) makes
-clear that the head present in the data shifts dramatically between
-cancer types, motivating per-cohort retraining via a single
-\texttt{--cohort} CLI flag.
+Cancer treatment planning requires decisions across multiple clinical
+dimensions at once. Clinicians must determine whether a patient should
+receive targeted molecular therapy, radiation therapy, and whether they
+are likely to survive beyond six months. Existing pathway-informed deep
+learning models have been developed and tested in isolation, so it is
+unclear how they compare on a common footing. We present a harmonized
+benchmark for pathway-guided prediction of treatment assignment and
+short-term survival, evaluating three biologically informed
+architectures, BINN, GraphPath, and PATH, across five cancer cohorts
+drawn from The Cancer Genome Atlas, representing 2,622 patients encoded
+using Reactome pathway activity scores. We emphasise that the labels
+reflect the treatment a patient was recorded as receiving in TCGA, i.e.\
+treatment exposure, rather than a measured response to therapy. Each
+model is trained jointly on all three clinical outcomes over a shared
+Reactome pathway representation, with each architecture retaining its
+original reference training protocol; to our knowledge this is the first
+study to treat pathway-structured deep learning as a combined
+treatment-assignment and short-term survival prediction problem. Our
+results show that, once every architecture is evaluated on identical
+stratified folds with matched uncertainty quantification (five repeated
+splits and paired-bootstrap tests), most inter-model differences fall
+within their 95\% confidence intervals: the architecture rankings reported
+when these models are studied in isolation are largely not statistically
+resolved. The one consistent and significant effect is that the
+sparse-hierarchy model BINN is the strongest survival (OS) predictor,
+significantly outperforming both graph models on breast-cancer OS
+($\Delta$AUROC up to $0.14$, $p\!\leq\!0.01$) and leading on lung and
+prostate OS. For treatment-assignment prediction, targeted molecular
+therapy is best discriminated in the prostate cohort (AUROC $\approx0.80$
+for all three models), yet no architecture significantly outperforms the
+others on any TMT cohort; radiation-therapy assignment is weakly predicted
+throughout, consistent with the hypothesis that its drivers are largely
+clinical rather than transcriptomic. Under a fair unified protocol, then,
+the choice among pathway-informed architectures matters far less than
+prior isolated results suggest, with short-term survival prediction the
+clearest point of differentiation.
 \end{abstract}
 
-\begin{IEEEkeywords}
-biologically informed neural networks, graph attention, graph transformer,
-Reactome, ssGSEA, breast cancer, therapy-response prediction, multi-label
-classification, systems immunology, interpretable deep learning.
-\end{IEEEkeywords}
 
-%--------------------------------------------------------------------
+
+\keywords{biologically informed neural networks, graph attention, graph
+transformer, Reactome, ssGSEA, breast cancer, treatment-assignment prediction,
+multi-label classification, systems immunology, interpretable deep learning}
+
+\maketitle
+\thispagestyle{onlyconf}
+\pagestyle{onlyconf}
 \section{Introduction}
-%--------------------------------------------------------------------
 
-Solid-tumor management is rarely a single decision: clinicians choose
-whether to deliver targeted molecular therapy, whether to add radiation,
-and how those decisions interact with the expected survival window. The
-three choices are correlated but not redundant. Treating them as one
-8-class label collapses the biology; predicting them \emph{independently}
-lets a model surface \emph{which} biological programmes drive \emph{which}
-decision and recovers any combination, including rare ones. Crucially,
-the three-axis label distribution shifts dramatically between cancer
-types --- 92\,\% TMT-positive in breast versus 11\,\% in prostate ---
-so the right architecture and the right head are inseparable from the
-right cohort (Fig.~\ref{fig:cohorts}).
+Cancer treatment planning is a difficult clinical problem because one
+patient may need several different kinds of decisions at the same time. A
+clinician may need to decide whether a patient should receive a targeted
+molecular therapy, whether radiation therapy should be used, and whether
+the patient is likely to survive beyond a short-term clinical window. These
+three questions are related, but they are not the same question. Targeted
+molecular therapy aims to block specific molecular drivers of cancer
+growth~\cite{Min2022}. Radiation therapy uses ionising radiation to damage
+tumour cells~\cite{Baskar2012}. Short-term survival prediction is often used
+to support risk stratification and care planning in oncology~\cite{Parikh2019,
+SideyGibbons2022}. A useful model should therefore learn these outcomes as
+separate but connected prediction tasks, instead of forcing them into one
+single label.
 
-The cleanest input representation for such a model is pathway activity.
-ssGSEA~\cite{barbie2009ssgsea,subramanian2005gsea} against the Reactome
-knowledgebase~\cite{gillespie2022reactome} converts a per-patient
-expression profile into a compact vector of pathway scores. Reactome's
-\emph{Immune System} subtree alone covers hundreds of nodes spanning
-innate, adaptive, cytokine, antigen-processing, and TCR/BCR cascades, so a
-sufficiently structured network can be read as a model-derived immune
-programme for each therapy axis.
+Gene expression data can help with this problem because it captures which
+genes are active in each tumour sample. However, raw gene expression has
+thousands of genes, and it can be hard to understand what a model learns
+from such a large input. A more interpretable approach is to summarize gene
+expression into biological pathways. Gene set enrichment analysis was
+introduced to connect gene expression patterns with known biological
+processes~\cite{subramanian2005gsea}, and single-sample GSEA makes it
+possible to estimate pathway activity for each individual
+sample~\cite{barbie2009ssgsea}. In this paper, we use Reactome, a curated
+pathway knowledgebase, to convert each patient into a vector of pathway
+activity scores~\cite{gillespie2022reactome}. This representation is easier
+to connect back to biology because each feature corresponds to a known
+pathway rather than an isolated gene.
 
-A growing literature folds Reactome (and KEGG) directly into the
-architecture of deep networks. Three recent representatives anchor the
-design space: \textbf{BINN}~\cite{hartman2023binn}, a sparse multi-layer
-perceptron whose between-layer masks come from the Reactome parent-child
-hierarchy (generalising P-NET~\cite{elmarakeby2021pnet}); \textbf{GraphPath}~%
-\cite{ma2024graphpath}, a multi-head graph attention network~\cite{velickovic2018gat}
-over a pathway-pathway interaction graph; and \textbf{PATH}~\cite{howlader2026path},
-an edge-aware Graph Transformer with Laplacian positional encoding, soft
-structural masking, and edge-conditioned attention bias on top of FiLM~%
-\cite{perez2018film}-modulated gene embeddings. These three span the
-design axis sparse-hierarchy~$\to$~graph-attention~$\to$~edge-aware
-transformer, but have never been compared on a common data flow because
-their published evaluations differ in cancer type, label cardinality,
-input modality, and pathway database.
+We formulate our problem as a multi-label prediction task. Given one
+patient's Reactome pathway activity profile, the model predicts three binary
+outcomes: targeted molecular therapy (TMT), radiation therapy (RT), and
+overall survival of at least 180 days (OS $\geq$ 180 d). This setup is
+important because a patient can belong to any combination of these outcomes.
+For example, one patient may receive targeted therapy but not radiation,
+while another may receive radiation and also survive beyond 180 days. By
+using three output heads, the model can learn which pathway patterns are
+most useful for each clinical question.
 
-\paragraph*{Contributions.}
+Recent work has shown that biological knowledge can be built directly into
+deep learning models~\cite{wysocka2023review,zohari2025gnnsurvey,zhang2025deeplearningreview}. P-NET used pathway structure to create a neural
+network for prostate cancer discovery~\cite{elmarakeby2021pnet}. BINN
+extended this idea by using biologically informed network connections to
+support pathway-level interpretation~\cite{hartman2023binn,pathhdnn2025}. GraphPath
+models pathways as nodes in a graph and uses graph attention to learn
+relationships between pathways~\cite{ma2024graphpath,velickovic2018gat,yan2024prior,dou2025mogcan,mcgnn2025,jiang2024irnet,pathnetdrp2024}.
+PATH uses a graph transformer~\cite{dwivedi2021graphtransformer,liu2024pathformer,zhang2022tgem} to represent pathway interactions for cancer
+prognosis~\cite{howlader2026path}. These models are promising, but they
+were developed and evaluated under different settings. Their datasets,
+labels, input features, and evaluation tasks are not the same, so it is
+difficult to know whether one architecture is generally better or whether
+each one works best for different clinical outcomes.
+
+In this work, we compare these pathway-informed models under one common
+pipeline. We use gene expression and clinical data from The Cancer Genome
+Atlas (TCGA), accessed through the UCSC Xena platform~\cite{Weinstein2013,
+xena2020}. We study five solid-tumour cohorts: breast, lung, prostate, head
+and neck, and thyroid cancer. For every cohort, we use the same preprocessing
+strategy: gene expression is converted into Reactome pathway activity scores,
+clinical records are converted into the three binary labels, and the same
+multi-label learning objective is used for all models. This makes the
+comparison more direct because the input representation and the learning
+objective are shared across models. We stress, however, that each
+architecture retains its original reference training protocol, including its
+own train/validation/test split ratio and, for PATH, its own gene-membership
+pathway filter (Section~\ref{sec:methods}); the benchmark is therefore
+harmonized at the level of data and representation rather than being a fully
+controlled head-to-head comparison, and cross-model rankings should be read
+with this caveat in mind.
+
+Our goal is not only to report which model has the highest score, but also
+to understand when each kind of biological structure helps. BINN represents
+Reactome as a sparse hierarchy. GraphPath represents pathways as an
+attention-based graph. PATH uses a transformer-style graph model with
+pathway interactions. By testing these approaches on the same task, we ask a
+simple question: do different pathway-based architectures help with
+different therapy and survival outcomes? This question matters because label
+distributions are different across cancer types. A cohort with many patients
+receiving targeted therapy may not behave like a cohort where targeted
+therapy is rare. Therefore, the best model may depend on both the phenotype
+being predicted and the cancer cohort being studied.
+
+The main contributions of this paper are as follows:
 \begin{itemize}[leftmargin=*]
-\item A \emph{multi-label} TCGA-BRCA benchmark on 618 samples, with a
-  clinically meaningful 3-axis label decoded from the TCGA clinical matrix.
-\item Faithful adaptations of GraphPath and PATH to pathway-level inputs:
-  we substitute a learnable per-pathway projection for their gene-level
-  stages and keep the downstream pathway-graph machinery exactly as
-  published.
-\item A phase-driven pipeline (env~$\to$~reactome~$\to$~data~$\to$~train~$\to$~evaluate)
-  that emits a versioned figure per phase. Figures use the Okabe-Ito
-  palette~\cite{okabe2008cb} and viridis colormap, both Nature-Methods
-  recommended~\cite{krzywinski2014nm}, so the manuscript is
-  colour-vision-deficiency accessible end-to-end.
-\item A phenotype-specific architectural ranking: PATH wins TMT, BINN
-  wins OS, and no model wins RT --- evidence that structural priors only
-  pay off when the head they encode is actually present in the data.
+  \item We build a harmonized TCGA benchmark for pathway-based prediction of
+  TMT, RT, and OS $\geq$ 6 m across five solid-tumour cohorts, sharing a
+  common input representation and learning objective across architectures.
+  \item We use the same Reactome and ssGSEA-based pathway representation for
+  every patient, making the input space consistent across cohorts and models.
+  \item We adapt and compare three pathway-informed deep learning
+  architectures: BINN, GraphPath, and PATH.
+  \item We show that model performance is phenotype-specific, meaning that
+  the strongest architecture can change depending on whether the target is
+  therapy assignment or short-term survival.
 \end{itemize}
 
-%--------------------------------------------------------------------
-\section{Related Work}
-%--------------------------------------------------------------------
-
-The Wysocka \emph{et al.} 2023 review~\cite{wysocka2023review} identifies
-four design axes for biologically-informed cancer DL: gene-to-pathway
-membership; pathway hierarchy; inter-pathway crosstalk; and the
-interpretability vehicle. P-NET~\cite{elmarakeby2021pnet} established the
-pathway-hierarchy axis; BINN generalised it across modalities and added
-per-layer SHAP-friendly heads. GraphPath~\cite{ma2024graphpath} shifted
-the inductive bias to the crosstalk axis with a multi-head GAT;
-Pathformer~\cite{liu2024pathformer} stacked criss-cross attention over
-multi-modal pathway tokens; PATH~\cite{howlader2026path} extended the
-crosstalk axis with an edge-aware Graph Transformer.
-
-A parallel literature targets immunotherapy specifically.
-IRnet~\cite{jiang2024irnet} casts immune-checkpoint-inhibitor response as
-graph classification over a curated pathway graph;
-PathHDNN~\cite{pathhdnn2025} and PathNetDRP~\cite{pathnetdrp2024} add
-protein-protein-interaction priors. Those works train on cohorts with
-explicit ICI-response labels (hundreds of samples); ours instead labels
-\emph{treatment received} on a 618-sample BRCA cohort. The cohort is an
-order of magnitude larger but the supervision signal is weaker, which
-makes the cross-architecture comparison more informative.
 
 %--------------------------------------------------------------------
 \section{Data}
 %--------------------------------------------------------------------
 
-\paragraph*{Source and curation.}
-TCGA HiSeqV2 expression and clinical matrices were retrieved from the
-UCSC Xena platform~\cite{xena2020,tcga2012brca} for five solid-tumor
-cohorts (breast, lung, prostate, head \& neck, and thyroid).
-For each cohort the pipeline runs a vectorised re-implementation of
-ssGSEA against Reactome gene sets of size 10--1{,}000, yielding a
-$1{,}706 \times N_{\mathrm{cohort}}$ score matrix normalised to $[0,1]$
-row-wise (\texttt{Intermediate Dataset/}). Per-sample clinical labels
-are then bit-encoded into a single stage integer and joined with the
-score matrix to produce \texttt{Final DataSet/}, one CSV per cohort.
-All five cohorts are trainable through a single \texttt{-{}-cohort}
-flag (\S\ref{sec:training}). (An earlier release of the lung dataset
-was a stale copy of breast; we rebuilt it from \texttt{TCGA.LUNG.HiSeqV2}
-plus \texttt{LUNG\_clinicalMatrix} so 970 unique LUAD/LUSC samples are
-now available.)
+\subsection{Data Curation}
 
-\paragraph*{Multi-label phenotype.}
-For each labeled sample we decode
-\(\mathrm{stage}=4\cdot\mathbf{1}[\mathrm{TMT}]+2\cdot\mathbf{1}[\mathrm{RT}]+\mathbf{1}[\mathrm{OS}\!\geq\!180\,\text{d}]\)
-back into three binary heads. Per-cohort positive prevalence is shown
-in Fig.~\ref{fig:cohorts}. The five cohorts cover a wide range of
-label-distribution regimes: breast is TMT-heavy (92\,\%),
-prostate is OS-dominated and TMT-rare (97\,\% / 11\,\%), head \& neck
-is RT-leaning (64\,\%), thyroid is OS-saturated (99\,\%) and almost
-TMT-free (6\,\%), and lung sits between breast and prostate
-(32\,\% TMT, 13\,\% RT, 89\,\% OS). This is exactly the kind of
-distributional shift that a class-weighted BCE loss must handle.
+We curated a diverse gene expression profiles and clinical phenotype data
+from the UCSC Xena browser~\cite{xena2020}, an open-access platform
+providing harmonised large-scale cancer genomic datasets. Drawing from
+this resource, we selected five solid-tumour cohorts from The Cancer
+Genome Atlas~\cite{Weinstein2013,tcga2012brca}: breast, lung, prostate, head and neck,
+and thyroid cancer. Together, these cohorts encompass a broad spectrum of
+biologically and clinically distinct tumour types, providing a
+representative foundation for assessing model generalisability across
+diverse cancer contexts.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig7_cohorts.pdf}
-\caption{Per-cohort positive prevalence of the three therapy-response
-heads, decoded from the \texttt{stage} bitfield of each cohort's
-\texttt{Final DataSet/} CSV. Counts in parentheses are
-positives/total. The five cohorts shown are exactly what the
-\texttt{-{}-cohort} flag accepts.}
-\label{fig:cohorts}
-\end{figure*}
+\subsection{Task Formation}
+Building on these cohorts, we defined three binary prediction tasks per
+patient to support clinically grounded evaluation. We stress at the outset
+that the therapy labels are derived from the treatment a patient is
+\emph{recorded as having received} in the TCGA clinical files, i.e.\ they
+capture treatment exposure or assignment, not a measured response of the
+tumour to that treatment. The tasks below should therefore be read as
+predicting which treatments were administered and whether the patient
+survived a short-term window, given the tumour's pathway activity profile.
 
-\paragraph*{Headline cohort.}
-For the trained-model results that follow (Figs.~\ref{fig:reactome}--%
-\ref{fig:cm}), we focus on the largest enabled cohort, breast cancer
-($n{=}618$). Fig.~\ref{fig:imbalance} zooms into the breast-cohort
-label balance and the resulting BCE positive-class weights; the same
-weighting scheme is applied per-cohort when the pipeline is invoked on
-prostate, head \& neck, thyroid, or lung (\S\ref{sec:training}).
+\medskip
+\noindent\textbf{Targeted Molecular Therapy (TMT):}\ %
+Classifying whether a patient was recorded as receiving compounds that
+selectively inhibit molecular drivers of tumour growth (e.g.,
+classifying whether a breast cancer patient received a HER2-directed
+targeted compound)~\cite{Min2022}. The label is set to 1 if the patient's
+\texttt{drug\_name}/pharmaceutical-therapy records contain at least one
+agent mapped to a targeted-therapy class, and 0 otherwise.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\linewidth]{figures/fig4_label_imbalance.pdf}
-\caption{Breast-cohort label balance and per-head positive-class BCE
-weighting. Left: positive (vermillion) and negative (sky blue) counts
-per head. Right: positive-class weight
-$w_h{=}\#\mathrm{neg}/\#\mathrm{pos}$ used by the loss, clipped to
-$[0.1,20]$ so the dominant TMT-positive class is down-weighted exactly
-enough to recover an effective balanced loss.}
-\label{fig:imbalance}
-\end{figure}
+\medskip
+\noindent\textbf{Radiation Therapy (RT):}\ %
+Identifying whether a patient was recorded as undergoing ionising radiation
+treatment designed to induce lethal DNA damage in tumour cells while sparing
+adjacent healthy tissue (e.g., identifying whether a head and neck cancer
+patient received radiotherapy as part of their primary treatment
+course)~\cite{Baskar2012}. The label is set to 1 if a radiation-therapy
+record is present for the patient and 0 otherwise.
 
-\paragraph*{Splits and pre-processing.}
-A stratified 70/15/15 split (BINN) or 80/10/10 split (GraphPath, PATH;
-matching the originals) is taken on the 8-class stage variable;
-on the breast cohort stage~2 contains a single patient, so the
-splitter falls back to a non-stratified partition where necessary
-(thyroid only contains 4 of 8 stage codes, with the same fallback
-triggered). Pathway scores are standardised per feature on the
-training fold only.
+\medskip
+\noindent\textbf{Overall Survival $\geq$ 6 Months (OS $\geq$ 6\,m):}\ %
+Determining whether a patient survived beyond the clinically established
+six-month (180-day) threshold, adopted as a surrogate of short-term prognosis
+(e.g., determining whether a lung cancer patient remained alive at least
+180 days following diagnosis)~\cite{SideyGibbons2022, Parikh2019}.
+We formulate overall survival as a binary task ($\geq 6$ vs $<6$ months)
+for short-term prognostic stratification in a multi-task setting. The label
+is computed from the TCGA \texttt{OS}/\texttt{OS.time} fields: a patient with
+a death event (\texttt{OS}$=1$) before 180 days is labelled 0, and a patient
+whose last observed follow-up (\texttt{OS.time}) is $\geq 180$ days is
+labelled 1. Because we treat the 180-day mark as a fixed classification
+threshold rather than a time-to-event outcome, patients who are censored
+(alive at last contact) before 180 days cannot be assigned an unambiguous
+label and are excluded from the OS head. This design does not model
+censoring or full time-to-event dynamics, so OS results reflect short-term
+risk classification rather than a full survival analysis; we return to this
+limitation in the Discussion.
+
+\subsection{Preprocessing}
+
+We aggregated gene expression data into biological pathways using the
+Reactome database~\cite{gillespie2022reactome}, retaining 1{,}706 curated pathways.
+Each pathway contains between 10 and 1{,}000 genes per sample. To quantify
+the biological activity within each retained pathway, scores were
+subsequently computed via single-sample gene set enrichment analysis
+(ssGSEA)~\cite{barbie2009ssgsea, subramanian2005gsea} and normalised to $[0,\,1]$. In parallel, we
+systematically encoded clinical outcomes as binary labels corresponding to
+the three prediction tasks defined above: TMT, RT, and OS\,$\geq$\,6\,m.
+Finally, pathway scores and outcome labels were merged using The Cancer
+Genome Atlas patient identifiers, retaining only complete samples for
+downstream analysis.
+
+\begin{table}[ht]
+  \centering
+  \caption{Per-Cohort Sample Counts and Positive Prevalence of Each Tumor
+    Phenotype Task Across All Five Cohorts}
+  \label{tab:summary}
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{@{} l r r r r @{}}
+    \toprule
+    \textbf{Cancer Type}
+      & \textbf{\textit{n}}
+      & \begin{tabular}{@{}c@{}}\textbf{TMT} \\ \textbf{\textit{n}\,(\%)}\end{tabular}
+      & \begin{tabular}{@{}c@{}}\textbf{RT} \\ \textbf{\textit{n}\,(\%)}\end{tabular}
+      & \begin{tabular}{@{}c@{}}\textbf{OS $\geq$ 6\,m} \\ \textbf{\textit{n}\,(\%)}\end{tabular} \\
+    \midrule
+    Breast        & 618   & 571\,(92\%)   & 345\,(56\%)   & 462\,(75\%)  \\
+    Prostate      & 496   &  54\,(11\%)   &  61\,(12\%)   & 480\,(97\%)  \\
+    Head \& Neck  & 429   & 150\,(35\%)   & 274\,(64\%)   & 395\,(92\%)  \\
+    Thyroid       & 109   &   7\,(\,6\%)  &  61\,(56\%)   & 108\,(99\%)  \\
+    Lung          & 970   & 311\,(32\%)   & 124\,(13\%)   & 863\,(89\%)  \\
+    \midrule
+    \textbf{Total}
+      & \textbf{2,622}
+      & \textbf{1,093\,(42\%)}
+      & \textbf{865\,(33\%)}
+      & \textbf{2,308\,(88\%)} \\
+    \bottomrule
+  \end{tabular}
+  \par\smallskip
+  \raggedright\footnotesize
+  TMT\,=\,targeted molecular therapy;\enspace
+  RT\,=\,radiation therapy;\enspace
+  OS\,=\,overall survival.
+\end{table}
 
 %--------------------------------------------------------------------
 \section{Models}\label{sec:methods}
 %--------------------------------------------------------------------
 
-All three architectures share the input (one ssGSEA score per pathway), the
-loss (per-head class-weighted BCE on three binary heads), and the
-standardised data pipeline of \S3. Their differences are entirely in how
-they encode \emph{biological structure}; Fig.~\ref{fig:archs} shows the
-three pipelines side-by-side.
+\subsection{Model Selection}
+We evaluate three biologically informed deep learning architectures:
+\textbf{BINN}, \textbf{GraphPath}, and \textbf{PATH}. Each encodes a
+progressively richer notion of pathway structure, allowing us to ask how
+much the structural prior matters for treatment-assignment prediction. All
+other experimental conditions are held fixed across models, so any
+performance differences can be attributed to architectural choice alone.
+
+All three models receive one standardised ssGSEA score per Reactome-matched
+pathway (1,706 pathways in total) and are trained end-to-end with a
+multi-task class-weighted binary cross-entropy objective over three
+prediction heads corresponding to TMT, RT, and OS $\geq$ 6\,m. The
+architectures differ only in how biological knowledge is encoded. BINN
+wires its layers to follow Reactome parent-child relationships exclusively.
+GraphPath extends this by connecting pathways laterally as well as
+hierarchically within a graph attention network. PATH goes further by
+weighting edges with continuous Jaccard similarity and incorporating
+Laplacian positional encodings and edge-conditioned attention into a Graph
+Transformer.
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig1_architectures.pdf}
-\caption{Three pathway-informed architectures. BINN imposes the Reactome
-parent-child \emph{hierarchy} as sparse masked-linear weights, and taps a
-classifier head off every layer. GraphPath imposes pathway-pathway
-\emph{adjacency} (parent + sibling) as a fixed-mask multi-head GAT. PATH
-imposes a weighted \emph{Jaccard adjacency} on the same nodes through an
-edge-aware Graph Transformer with Laplacian positional encoding and
-edge-conditioned attention bias.}
-\label{fig:archs}
+\includegraphics[width=0.7\textwidth]{Presentation1.pdf}
+\caption{Workflow of the proposed method}
+\label{fig:flow}
 \end{figure*}
 
-\subsection{BINN — sparse Reactome hierarchy}\label{sec:binn}
-Starting from $N_0$ input pathways, we walk Reactome parent-child edges
-upward for $H{=}4$ layers, copying terminal nodes forward so every path
-has full depth. The Reactome edge structure between adjacent layers
-defines a $\{0,1\}$ mask $M^{(\ell)}\!\in\!\{0,1\}^{|L_{\ell+1}|\times|L_\ell|}$.
-Each hidden block is
+% ------------------------------------------------------------------ %
+\subsection{Performance Metrics}
+
+We evaluate model performance using five complementary metrics across all
+benchmark tasks.
+
+\textbf{AUROC} measures the probability that a randomly chosen positive
+example is ranked higher than a randomly chosen negative:
 \begin{equation}
-h^{(\ell+1)} = \mathrm{Drop}\bigl(\mathrm{BN}\bigl(\tanh\bigl((W^{(\ell)}{\odot}M^{(\ell)})h^{(\ell)} + b^{(\ell)}\bigr)\bigr)\bigr).
+    \text{AUROC} = \int_0^1 \text{TPR}\!\left(\text{FPR}^{-1}(t)\right) dt
 \end{equation}
-An auxiliary classifier head sits after \emph{every} layer (input plus each
-hidden), producing three logits each. The final head probability is the
-mean of all $H{+}1$ sigmoid outputs~\cite{hartman2023binn}:
-\(
-\hat{p}_h(x) = \tfrac{1}{H+1}\sum_{\ell=0}^{H}\sigma\bigl(H^{(\ell)}(h^{(\ell)})_h\bigr)
-\).
-The per-layer head makes layer-wise SHAP attribution well-posed because
-every node has its own loss signal.
 
-\subsection{GraphPath — multi-head graph attention}
-We form a $\{0,1\}$ pathway-pathway adjacency $A$ with $A_{pq}{=}1$ iff
-$p$ and $q$ are parent-child or share a parent (siblings) in Reactome --- a
-KEGG-analogous structure compatible with our pathway set. Self-loops are
-added so every node attends to itself. A learnable projection
-$W_{\mathrm{proj}}\!\in\!\mathbb{R}^{1\times d}$ plus a pathway-specific
-bias $b_p$ lifts the scalar ssGSEA score to dimension $d$. One masked
-multi-head GAT layer ($K{=}3$ heads, ELU activation; \cite{ma2024graphpath}
-Eqs.~1--2) computes per-head attention as
-\(
-\alpha^{(k)}_{ij}=\mathrm{softmax}_{j}\bigl(\mathrm{LeakyReLU}\bigl(a^{(k)\top}[W^{(k)}h_i \,\Vert\, W^{(k)}h_j]\bigr)\bigr)
-\),
-masking $A_{ij}{=}0$ entries to $-\infty$. Per-head outputs are
-concatenated. A shared linear-plus-tanh readout collapses each node to a
-scalar, and one fully-connected layer maps the resulting $N$-vector to
-three head logits.
-
-\subsection{PATH — edge-aware Graph Transformer}
-PATH uses a \emph{weighted} adjacency $A_{pq}\!\in[0,1]$ given by the
-Jaccard similarity of Reactome gene memberships $|G_p \cap G_q| / |G_p \cup G_q|$
-with $|G_p|{\geq}15$, renormalised by the matrix max~\cite{howlader2026path}.
-Because our dataset lacks gene-level CNV/mutation, the paper's Stage~1
-(FiLM-modulated gene embedding) and Stage~2 (intra-pathway attention pool)
-are replaced by the same per-pathway projection used by GraphPath; the
-remaining Stages~3--4 are faithful. Stage~3 adds Laplacian positional
-encodings: the top-$k{=}16$ eigenvectors of
-$L{=}I{-}D^{-1/2}AD^{-1/2}$, sign-flip augmented during training. Each of
-$L{=}2$ transformer blocks computes scaled dot-product multi-head attention
-($H{=}4$ heads) with two structural biases. The first is a \emph{soft
-structural mask}
-\(m^{(\mathrm{struct})}_{pq}{=}0\) for $A_{pq}{>}0$ or $p{=}q$, and
-$-10$ otherwise --- non-edges are heavily down-weighted but still
-gradient-reachable, which lets the model rewire the prior graph when the
-data warrants. The second is an \emph{edge-conditioned bias}
+\textbf{AUPRC} summarizes the precision‑recall trade‑off and is particularly informative under class imbalance, which is common in cancer genomics datasets:
 \begin{equation}
-\phi^{(\ell)}_{pq} = \frac{1}{H}\sum_{h=1}^{H} \log\bigl(\mathrm{softplus}(w_h^{(\ell)} e^{(\ell)}_{pq} + b_h^{(\ell)}) + \varepsilon\bigr),
+    \text{AUPRC} = \sum_k \left(R_k - R_{k-1}\right) P_k
 \end{equation}
-where $e^{(\ell)}_{pq}$ is a learnable per-layer edge feature initialised
-to the adjacency weight. A residual-wrapped GELU FFN (expansion~4) with
-per-token BatchNorm follows the attention; a parallel two-layer MLP updates
-edge features between blocks. Stage~4 collapses the tokens via
-attention-weighted readout $g{=}\sum_p w_p\,x_p^{(L)}$ and passes $g$
-through BN\,$\to$\,GELU\,$\to$\,Drop\,$\to$\,Linear$\to$3 head logits.
 
-\subsection{Loss, training, and reproducibility}\label{sec:training}
-All three models minimise per-head class-weighted BCE on the 3-bit label
-with $w_h{=}\#\mathrm{neg}/\#\mathrm{pos}$ computed on the training fold
-and clipped to $[0.1,20]$. Optimisers follow each paper: Adam for BINN
-($\eta{=}10^{-3}$, weight decay~$10^{-3}$); SGD with momentum~0.9 for
-GraphPath ($\eta{=}5\times10^{-2}$); AdamW for PATH ($\eta{=}10^{-4}$,
-weight decay~$5\times10^{-4}$, gradient clip~2.0). All three use plateau
-LR scheduling on validation loss and early-stop on validation loss with
-patience 20--25. Implemented in PyTorch~2.0~\cite{paszke2019pytorch} with
-scikit-learn~\cite{pedregosa2011sklearn} for metrics. Random seeds are
-fixed across Python, NumPy, and PyTorch; every figure in this paper is
-regenerated by running
-\texttt{scripts/run\_all.sh} inside \texttt{binn/}, \texttt{graphpath/},
-and \texttt{path/}, followed by \texttt{paper/build.sh}.
+\textbf{F1 Score} is the harmonic mean of precision (P) and recall (R) for
+the positive class of each clinical head, evaluated at the
+validation-tuned decision threshold:
+\begin{equation}
+    \text{F1} = \frac{2\,\text{P}\cdot\text{R}}{\text{P}+\text{R}},
+    \qquad
+    \text{P} = \frac{\text{TP}}{\text{TP}+\text{FP}},
+    \qquad
+    \text{R} = \frac{\text{TP}}{\text{TP}+\text{FN}}.
+\end{equation}
+Because each head is a single binary decision, we report the positive-class
+(binary) F1 per head rather than a support-weighted average across classes;
+this matches the quantity computed by our evaluation code.
+
+\textbf{Accuracy} measures the fraction of correctly classified samples:
+\begin{equation}
+    \text{Accuracy} = \frac{1}{N} \sum_{i=1}^{N}
+    \mathbf{1}\!\left[\hat{y}_i = y_i\right]
+\end{equation}
+
+\textbf{Confusion Matrix} provides a full breakdown of predictions across
+classes, where entry $C_{ij}$ denotes samples of true class $i$ predicted
+as class $j$:
+\begin{equation}
+    C =
+    \begin{pmatrix}
+        \text{TP} & \text{FN} \\
+        \text{FP} & \text{TN}
+    \end{pmatrix}
+\end{equation}
+
+\subsection{BINN - Sparse Reactome Hierarchy}
+
+\paragraph{Architecture Overview:}
+BINN integrates the Reactome parent-child hierarchy directly into the
+network by imposing sparse masked-linear connections between layers,
+together with auxiliary classification heads at each depth. This
+design ensures that gradient signals reach every intermediate node
+during training, making gradient-$\times$-input attribution across
+the hierarchy well-posed~\cite{lundberg2017shap}.
+
+\paragraph{Pathway Hierarchy:}
+Starting from 1,706 Reactome-matched input pathways, the model
+traverses parent-child edges upward through three hidden layers,
+yielding a four-layer network with dimensions:
+\begin{equation}
+1{,}706 \to 656 \to 306 \to 163.
+\end{equation}
+Pathways that terminate before the maximum depth are copied forward,
+ensuring every pathway is represented at every layer.
+
+\paragraph{Sparse Masked Weights:}
+Between consecutive layers $\ell$ and $\ell+1$, the Reactome
+hierarchy defines a binary connectivity mask
+$M^{(\ell)} \in \{0,1\}^{|L_{\ell+1}| \times |L_\ell|}$, where:
+\begin{equation}
+\begin{gathered}
+M^{(\ell)}_{ij} = 1 \iff \text{node } j \text{ in layer } \ell \\[4pt]
+\text{is a Reactome child of node } i \text{ in layer } \ell{+}1,
+\end{gathered}
+\end{equation}
+or node $j$ is a terminal node copied forward to position $i$.
+Weights are initialised with Kaiming uniform initialisation and zeroed
+outside the mask prior to the first forward pass. Sparsity is enforced
+throughout training via the elementwise product
+$W^{(\ell)} \odot M^{(\ell)}$.
+
+\paragraph{Forward Pass:}
+Each hidden block applies the masked linear transformation followed by
+Tanh activation, Batch Normalisation, and Dropout ($p = 0.2$):
+\begin{equation}
+\begin{gathered}
+z^{(\ell)} = \bigl(W^{(\ell)} \odot M^{(\ell)}\bigr)\, h^{(\ell)}
+             + b^{(\ell)}, \\[4pt]
+h^{(\ell+1)} = \text{Dropout}\!\left(
+                 \text{BN}\!\left(\tanh\!\left(z^{(\ell)}\right)\right)
+               \right).
+\end{gathered}
+\end{equation}
+
+\paragraph{Multi-Layer Supervision:}
+An auxiliary classifier head $\text{Linear}(|L_\ell| \to 3)$ is
+attached after every layer, including the raw input ($\ell = 0$),
+producing three logits per layer. The final predicted probability for
+head $h$ is the mean of all four sigmoid outputs:
+\begin{equation}
+\hat{p}_h(x) = \frac{1}{4} \sum_{\ell=0}^{3}
+               \sigma\!\left(H^{(\ell)}\!\left(h^{(\ell)}\right)[h]\right),
+\end{equation}
+where $H^{(\ell)}$ denotes the classifier at layer $\ell$. Attaching
+a loss signal at every depth ensures that each intermediate node
+receives direct supervision, a prerequisite for meaningful
+attribution across the hierarchy.
+
+% ------------------------------------------------------------------ %
+\subsection{GraphPath - Multi-Head Graph Attention}
+
+\paragraph{Architecture Overview:}
+GraphPath treats the 1,706 Reactome pathways as nodes in a graph and
+updates their embeddings through a multi-head graph attention network
+(GAT). Because pathways interact and co-regulate one another rather
+than acting as independent units, each pathway aggregates information
+from its biologically annotated neighbours before the classification
+step.
+
+\paragraph{Pathway Adjacency Graph:}
+A symmetric binary adjacency matrix $A \in \{0,1\}^{N \times N}$ is
+constructed such that:
+\begin{equation}
+\begin{gathered}
+A_{pq} = 1 \iff \text{pathways } p \text{ and } q \text{ share} \\[4pt]
+\text{a Reactome parent-child or sibling relationship.}
+\end{gathered}
+\end{equation}
+This yields 4,672 undirected edges with a mean node degree of 5.5.
+Self-loops are added so that each node attends to its own embedding
+during message passing.
+
+\paragraph{Input Projection:}
+Each scalar ssGSEA score $x_p$ is projected to a $d$-dimensional
+embedding ($d = 64$) via a shared weight matrix
+$W_{\text{proj}} \in \mathbb{R}^{1 \times d}$ and a pathway-specific
+bias $b_p \in \mathbb{R}^d$, followed by Tanh activation:
+\begin{equation}
+h^{(0)}_p = \tanh\!\left(x_p \cdot W_{\text{proj}} + b_p\right).
+\end{equation}
+The pathway-specific bias captures baseline differences in pathway
+activity, while the shared projection weight preserves parameter
+efficiency.
+
+\paragraph{Multi-Head Graph Attention:}
+Node embeddings are updated by a single GAT layer with $K = 3$
+attention heads and ELU output activation. For each head $k$, the
+raw attention score and normalised coefficient are:
+\begin{equation}
+\begin{gathered}
+e^{(k)}_{ij} = a^{(k)\top}\!\left[W^{(k)}h_i \,\|\, W^{(k)}h_j\right],
+\\[4pt]
+\alpha^{(k)}_{ij} = \text{softmax}_{j \in \mathcal{N}(i)}\,
+\text{LeakyReLU}_{0.2}\!\left(e^{(k)}_{ij}\right).
+\end{gathered}
+\end{equation}
+Non-edges ($A_{ij} = 0$) are masked to $-\infty$ before the softmax,
+confining attention to biologically annotated neighbours. Attention
+dropout ($p = 0.4$) is applied during training. Per-head embeddings
+are concatenated to yield a node representation of dimension $K \cdot d$.
+
+\paragraph{Readout and Classification:}
+A shared $\text{Linear}(Kd \to 1)$ layer followed by Tanh collapses
+each node to a scalar readout. The resulting $N$-dimensional vector
+is passed through a fully-connected layer mapping to three binary head
+logits, followed by sigmoid activation.
+
+% ------------------------------------------------------------------ %
+\subsection{PATH - Edge-Aware Graph Transformer}
+
+\paragraph{Architecture Overview:}
+PATH constructs a weighted pathway graph from gene-set overlap and
+augments a Graph Transformer with Laplacian positional encodings and
+learnable edge-conditioned attention biases. This allows the model to
+represent graded biological similarity between pathways and to
+partially rewire the prior graph when the data warrant it.
+
+\paragraph{Weighted Pathway Adjacency:}
+Edge weights are defined as the Jaccard similarity of Reactome gene
+memberships:
+\begin{equation}
+A_{pq} = \frac{|G_p \cap G_q|}{|G_p \cup G_q|},
+\quad |G_p| \geq 15,
+\end{equation}
+computed from the Reactome GMT file and renormalised to $[0,1]$. Only
+pathways with at least 15 annotated genes qualify as nodes, yielding
+1,431 nodes, 243,210 weighted edges, and a mean node degree of 339.9.
+The dense connectivity reflects the substantial gene-set overlap
+characteristic of the Reactome hierarchy and motivates a soft
+structural mask rather than hard adjacency truncation.
+
+\paragraph{Input Projection and Positional Encoding:}
+To ensure a fair comparison, we replaced PATH's original Stage 1 (FiLM-modulated gene embeddings) and Stage 2 (intra-pathway attention pooling) with the same per-pathway scalar projection used in GraphPath ~\cite{perez2018film}. This setup uses a shared weight and a pathway-specific bias to project each score into a 64-dimensional space ($\mathbb{R}^d, d = 64$), followed by a Tanh activation.
+
+Laplacian positional encodings are added to endow the model with
+structural awareness. The top-$k = 16$ non-trivial eigenvectors of
+the symmetrically normalised Laplacian
+$L = I - D^{-1/2}AD^{-1/2}$ are concatenated with the normalised node
+degree $\deg(p)/(N + \epsilon)$, forming a $(k{+}1)$-dimensional
+positional feature per node. These features are projected to
+$\mathbb{R}^d$ via a learnable linear layer and added to node
+embeddings before the transformer stack. Eigenvector signs are
+randomly flipped per epoch during training to resolve sign ambiguity.
+
+\paragraph{Edge-Aware Transformer Blocks.}
+PATH employs $L = 2$ transformer blocks, each computing scaled
+dot-product multi-head self-attention ($H = 4$ heads) augmented by
+two structural biases.
+
+\emph{Soft structural mask.} Non-edges are heavily but softly
+down-weighted:
+\begin{equation}
+m^{(\text{struct})}_{pq} = \begin{cases}
+0   & \text{if } A_{pq} > 0 \text{ or } p = q, \\
+-10 & \text{otherwise.}
+\end{cases}
+\end{equation}
+Keeping non-edges gradient-reachable allows the model to rewire the
+prior graph when the data provide sufficient evidence.
+
+\emph{Edge-conditioned attention bias.} A learnable per-layer scalar
+edge feature is aggregated over attention heads to produce a
+continuous bias on the attention logits:
+\begin{equation}
+\phi^{(\ell)}_{pq} = \frac{1}{H} \sum_{h=1}^{H}
+\log\,\text{softplus}\!\left(
+  w^{(\ell)}_h\, e^{(\ell)}_{pq} + b^{(\ell)}_h
+\right) + \epsilon,
+\end{equation}
+where $e^{(\ell)}_{pq}$ is initialised from the Jaccard weight. The
+combined bias $m^{(\text{struct})}_{pq} + \phi^{(\ell)}_{pq}$ is
+added to the raw attention logits before the softmax, grounding
+attention in biological pathway similarity while permitting
+data-driven refinement.
+
+Following attention, a residual-wrapped GELU feed-forward network
+(expansion factor 4) with per-token Batch Normalisation updates node
+features. A parallel two-layer MLP with Batch Normalisation updates
+edge features between transformer blocks.
+
+\paragraph{Readout and Classification.}
+Node tokens are collapsed to a graph-level embedding via
+attention-weighted readout:
+\begin{equation}
+\begin{gathered}
+g = \sum_{p} w_p\, x_p^{(L)}, \\[4pt]
+w_p = \text{softmax}_p\!\left(
+        v^\top \tanh\!\left(U x_p^{(L)}\right)
+      \right),
+\end{gathered}
+\end{equation}
+where $U \in \mathbb{R}^{d \times (d/2)}$ and $v \in \mathbb{R}^{d/2}$
+are learnable parameters. This soft attention over nodes identifies
+the pathways most informative for the three prediction targets. The
+graph embedding $g$ is then passed through a classification head:
+\begin{multline}
+\text{Linear}(d \to d) \to \text{BN} \to \text{GELU} \\
+\to \text{Dropout}(p=0.2) \to \text{Linear}(d \to 3),
+\end{multline}
+producing three binary head logits.
+
+% ------------------------------------------------------------------ %
+\subsection{Loss, Training, and Reproducibility}
+
+\paragraph{Objective Function:}
+All three models minimise a per-head class-weighted binary cross-entropy loss. Positive-class weights are computed on the training fold as $w_h = \text{neg}_h / \text{pos}_h$ and clipped to $[0.1, 20]$ to prevent extreme imbalance from destabilising training. For BINN, the loss is applied to the averaged sigmoid outputs; for GraphPath and PATH, it is applied to raw logits via \texttt{BCEWithLogitsLoss} (or \texttt{F.binary\_cross\_entropy\_with\_logits}) for numerical stability.
+
+\paragraph{Optimisers and Learning Rate Schedules:}
+Optimiser choices follow each reference implementation:
+
+\begin{table}[!h]
+\centering
+\small
+\caption{Optimiser configuration per model.}
+\label{tab:optimisers}
+\begin{tabular}{lccc}
+\toprule
+ & BINN & GraphPath & PATH \\
+\midrule
+Optimiser    & Adam ~\cite{kingma2015adam}     & SGD (momentum 0.9)  & AdamW ~\cite{loshchilov2019adamw} \\
+LR           & $10^{-3}$ & $5 \times 10^{-2}$  & $10^{-4}$ \\
+Weight Decay & $10^{-3}$ & $5 \times 10^{-2}$  & $5 \times 10^{-4}$ \\
+Batch Size   & 32        & 32                  & 16 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three models employ ReduceLROnPlateau scheduling on validation
+loss with a reduction factor of 0.5 and plateau patience of 7, 8, and
+10 epochs for BINN, GraphPath, and PATH respectively.
+
+\paragraph{Early Stopping:}
+Training is terminated when validation loss fails to improve for 20
+consecutive epochs (BINN) or 25 consecutive epochs (GraphPath, PATH).
+For PATH, a minimum of 25 training epochs is required before the
+patience counter activates, preventing premature termination during
+the characteristically slow initial convergence of the transformer
+stack. The checkpoint with the lowest validation loss is restored
+prior to evaluation.
+
+\paragraph{Unified splits and evaluation protocol:}
+To enable a controlled comparison, all three models share a single
+stratified 80/10/10 train/validation/test split per cohort, generated by a
+common splitter seeded identically across architectures. Consequently, at a
+fixed seed every model is trained and evaluated on \emph{byte-identical}
+folds for a given cohort. To quantify uncertainty, we repeat the entire
+sweep over five seeds ($s \in \{0,1,2,3,4\}$), which yields five independent
+stratified splits per cohort, and report the mean and 95\% confidence
+interval of each test metric across these repeats. In addition, because the
+models are aligned sample-for-sample on identical test folds, we compare
+architectures with a \emph{paired bootstrap} over held-out samples
+($10^{4}$ resamples): for each pair of models we recompute the AUROC
+difference on each resampled test set and report its 95\% CI and a two-sided
+bootstrap $p$-value (Table~\ref{tab:boot}). This directly addresses the need
+for repeated evaluation, confidence intervals, and statistical comparison
+under a shared split.
+
+\paragraph{Reproducibility and availability:}
+All models are implemented in PyTorch 2.0 ~\cite{paszke2019pytorch}, with scikit-learn ~\cite{pedregosa2011sklearn} used for
+metric computation. Random seeds are fixed identically across Python,
+NumPy, and PyTorch for all models and cohorts; the repeated-split sweep is
+driven by \texttt{slurm/20\_cv.sbatch} and aggregated by
+\texttt{paper/scripts/aggregate\_cv.py}. The single-seed figures are
+regenerated by executing \texttt{scripts/run\_all.sh} within the
+\texttt{binn/}, \texttt{graphpath/}, and \texttt{path/} directories,
+followed by \texttt{paper/build.sh}. Source code, the exact per-cohort,
+per-seed split index files, and the per-sample test predictions used for the
+bootstrap tests are released so that every reported number and split can be
+reproduced exactly.
 
 %--------------------------------------------------------------------
 \section{Results}
 %--------------------------------------------------------------------
 
-All trained-model numbers in this section come from the breast cohort
-($n{=}618$). The same pipeline runs unchanged on lung, prostate,
-head \& neck, and thyroid via the \texttt{-{}-cohort} flag;
-cross-cohort training is
-deferred to a follow-up paper because the per-cohort prevalence shifts
-of Fig.~\ref{fig:cohorts} make each cohort an interesting analysis on
-its own right rather than a stepping-stone to a single pooled number.
+Performance was evaluated across three clinical prediction heads TMT,
+RT, and OS using F1, AUPRC, and AUROC metrics on five TCGA
+solid-tumour cohorts. Unless otherwise noted, all reported numbers are the
+mean over five repeated stratified splits (seeds $0$--$4$) evaluated on the
+unified 80/10/10 protocol, so that at each seed the three architectures see
+identical held-out folds. Table~\ref{tab:cv} reports the per-cohort,
+per-head test AUROC as mean\,[95\% CI] across these repeats, and
+Table~\ref{tab:boot} reports paired-bootstrap significance tests for every
+pairwise model contrast. The nine-panel benchmark presented in
+Fig.~\ref{fig:bars} makes one thing immediately clear: no single
+architecture dominates uniformly. Direct comparison with the originally
+reported results of BINN, GraphPath and PATH is not appropriate because
+the models were evaluated under a different prediction task, feature
+representation, cohort composition and endpoint definition. Two patterns
+stand out once uncertainty is accounted for: (i) many head-to-head gaps have
+95\% CIs that include zero, so the ranking on those cells is not statistically
+resolved, and (ii) the differences that survive the bootstrap are
+concentrated in the TMT head, consistent with therapy-assignment outcomes
+being more architecture-sensitive than survival.
 
-\subsection{Reactome structure consumed by each model}
-Fig.~\ref{fig:reactome} reports the Reactome graph that each model
-actually trains on. All three matched 1{,}686 of 1{,}706 input pathway
-names to Reactome IDs (20 names did not resolve --- mainly deprecated
-sub-pathways and renamed entries since the Reactome 2025 release).
-The three models then carve very different graphs out of those nodes.
-BINN collapses the 1{,}686 leaves into a four-layer hierarchy
-($1686\to656\to306\to163$) connected by 2{,}715 directed edges, ending at
-163 top-level Reactome processes (immune system, metabolism, signal
-transduction, etc.). GraphPath flattens the same hierarchy into a
-\emph{sparse} undirected graph with 4{,}672 edges and a mean degree of
-5.5 --- mostly parent-child and sibling links. PATH instead builds a
-\emph{dense} weighted graph from gene-set Jaccard overlap: 243{,}210 edges
-and a mean degree of 339.9. The three structures correspond to three
-genuinely different inductive biases, even though they all start from the
-same Reactome.
+\input{cv_table.tex}
+\input{boot_tests.tex}
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig5_reactome_structure.pdf}
-\caption{Reactome structure consumed by each model (Phase~2 output).
-Left: BINN layer node counts and the number of edges connecting each
-adjacent pair. Centre: GraphPath's parent~$\cup$~sibling adjacency
-degree distribution. Right: PATH's Jaccard adjacency degree distribution.
-The three graphs differ by two orders of magnitude in edge count, even
-though they share the same 1{,}686 nodes.}
-\label{fig:reactome}
+\includegraphics[width=0.7\textwidth]{fig1.png}
+\caption{Held-out test AUROC per clinical head (TMT, RT, OS) and cohort,
+shown as the mean over five identical-split repeats with 95\% confidence
+intervals (error bars); the dotted line marks chance (0.5). BINN blue,
+GraphPath orange, PATH green~\cite{krzywinski2014nm,okabe2008cb}.}
+\label{fig:bars}
 \end{figure*}
 
-\subsection{Training behaviour and convergence}
-BINN converges fastest (29 epochs, best-val at epoch~9), with a clear
-train/val gap that early-stopping caps before overfitting. GraphPath
-barely separates train from val (0.358 vs 0.356) and converges in 30
-epochs --- consistent with the very small trainable-parameter count
-(the masked GAT shares weights aggressively per head). PATH trains
-longest (167 epochs, best-val at 142) and shows the cleanest
-generalisation-gap shape: train and val descend together for the first
-$\sim$50 epochs before train continues to drop and val plateaus.
-AdamW with gradient clipping handles the much-larger transformer
-parameter count without instability. Per-cohort training curves are
-emitted to \texttt{figures/fig6\_training\_curves.pdf} for review.
+\subsection{Comparative Performance Across Clinical Endpoints}
 
-\subsection{Per-head test-set discrimination}
-Fig.~\ref{fig:bars} gives the headline result: AUROC, AUPRC, and F1 on the
-held-out test split for each model and each head. Three observations
-stand out.
+\subsubsection{Evaluation of BINN:}
 
-\paragraph*{TMT (severely imbalanced, 92\,\% positive).}
-PATH wins decisively (AUROC~0.642), with BINN and GraphPath both close to
-chance (0.557 and 0.530). On a head where the positive class is the
-default, AUROC measures whether the model can discriminate the rare
-\emph{negative} (untreated) patients --- exactly where PATH's edge-aware
-attention helps, because the Jaccard adjacency lets it pool signal across
-pathway pairs that share genes but are not in a parent-child relationship.
-All three architectures have similarly high AUPRC ($\sim$0.85), but that is
-mostly the imbalance speaking; F1 at the default 0.5 threshold is
-inflated for the same reason.
+BINN is the strongest survival predictor and the only architecture whose
+advantage is statistically resolved under the unified protocol. On the OS
+head it attains the highest mean test AUROC on the breast (0.66), lung
+(0.57), and prostate (0.73) cohorts (Table~\ref{tab:cv}), and the
+paired-bootstrap tests confirm that its breast-OS advantage over both
+GraphPath ($\Delta$AUROC $0.10$, $p{=}0.010$) and PATH ($\Delta$AUROC
+$0.14$, $p{=}0.001$) is significant (Table~\ref{tab:boot}). We attribute
+this to multi-depth auxiliary supervision, which propagates loss signals
+through every layer of the Reactome hierarchy and reinforces broad
+transcriptional survival signals distributed across pathway levels. The
+perfect thyroid OS-F1 seen in single-split runs does \emph{not} survive
+repeated evaluation: with only a single OS-negative patient in the cohort,
+thyroid OS is degenerate and its estimates are flagged as underpowered
+(Table~\ref{tab:boot}).
 
-\paragraph*{RT (balanced, 56\,\% positive).}
-Three-way tie inside noise (AUROC 0.51--0.58, AUPRC 0.59--0.64). None of
-the pathway-informed inductive biases recover a real signal for RT from
-ssGSEA scores alone. This is biologically plausible: radiation-therapy
-decisions are anchored in tumour size, lymph-node status, and surgical
-margins, which the bulk pathway-activity vector simply does not encode.
+On the TMT head BINN is competitive but not dominant, reaching AUROC 0.62
+on head \& neck and 0.80 on prostate, statistically indistinguishable from
+the other two models on every cohort. On RT, BINN records the best head \&
+neck AUROC (0.63), a significant margin over GraphPath ($\Delta$AUROC
+$0.06$, $p{=}0.013$); elsewhere RT differences are small and within
+confidence intervals.
 
-\paragraph*{OS\,$\geq$\,180\,d (moderately skewed, 75\,\% positive).}
-BINN wins (AUROC~0.650), PATH second (0.601), GraphPath third (0.600).
-The hierarchical structure pays off here: short-term survival is
-plausibly governed by a few high-level Reactome processes (immune system,
-metabolism, programmed cell death) and the BINN's terminal layer literally
-\emph{is} those processes. GraphPath's F1 collapses (0.218) because at the
-0.5 threshold its predictions degenerate toward the majority class;
-its AUROC is still competitive, so its calibration --- not its ranking --- is
-the issue.
+\subsubsection{Evaluation of PATH:}
+Under the unified protocol PATH does not establish a statistically
+significant advantage on any head. Its TMT AUROC is comparable to the other
+models on prostate ($0.82$ vs.\ $0.80$/$0.79$; differences not significant)
+and lower on breast (0.50) and lung (0.48). The apparent head \& neck TMT
+edge reported in isolated evaluation does not reproduce here (AUROC 0.57,
+statistically tied with BINN and GraphPath). On OS, PATH is the weakest
+model on breast (0.53) and prostate (0.45) and is significantly
+outperformed by BINN on breast OS (Table~\ref{tab:boot}); it is only level
+with the others on head \& neck OS.
 
-\begin{figure}[!t]
+On the RT head all three models converge, with no significant differences
+on breast, lung, or prostate. Overall, the dense Jaccard-weighted graph,
+while biologically motivated, does not translate into consistently better
+discrimination on these cohorts, and its lack of pathway-level
+interpretability is not offset by a predictive gain.
+
+\subsubsection{Evaluation of GraphPath:}
+
+GraphPath is broadly competitive with the other two architectures but is
+rarely separable from them: it is not the significant winner on any
+cohort/head. On TMT it is marginally strongest on breast (0.57) and thyroid
+(0.71), yet none of these gaps are statistically significant, and on RT it
+is significantly \emph{beaten} by BINN on head \& neck (Table~\ref{tab:boot}).
+On OS it tracks the other models closely, trailing BINN significantly on
+breast.
+
+Notably, the single-split ``0.92 prostate TMT'' result that stood out when
+GraphPath was evaluated in isolation does \emph{not} hold under the unified
+protocol: across five identical-fold repeats its prostate TMT AUROC is
+$0.79\,[0.70,0.88]$, statistically indistinguishable from BINN (0.80) and
+PATH (0.82). This reversal is exactly the kind of split-dependent artefact
+that a unified, repeated-split evaluation is designed to expose, and it
+underscores why cross-model claims from separately tuned splits should be
+treated with caution.
+
+\subsection{Cross-Cancer Subtype Performance}
+
+As shown in Fig.~\ref{fig:cross} and Table~\ref{tab:cv}, performance
+variability across cohorts is more head- and cohort-dependent than
+model-dependent. On the TMT head, discrimination is driven overwhelmingly
+by the cohort rather than the architecture: all three models reach
+AUROC $\approx0.80$ on prostate---the most targetable-driver-defined
+cohort---while collapsing toward chance on breast and lung, and none of the
+inter-model TMT contrasts is statistically significant in any cohort
+(Table~\ref{tab:boot}). The thyroid TMT cell, though numerically high for
+PATH, rests on only seven positive cases and carries very wide intervals.
+
+On the RT head, the models perform similarly across cohorts and RT is weakly
+predicted overall; the only significant separation is at head \& neck, where
+BINN exceeds GraphPath. On the OS head, BINN is consistently at or above the
+other models, significantly so on breast, while prostate and thyroid OS are
+too imbalanced to support reliable ranking. Across all three heads, the
+gaps that survive repeated evaluation and paired bootstrapping are
+concentrated in OS (favouring BINN) rather than in the treatment-assignment
+heads, indicating that---contrary to what isolated single-split results
+suggested---survival prognosis, not therapy assignment, is where
+architectural choice most clearly matters.
+
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=\linewidth]{figures/fig2_metric_bars.pdf}
-\caption{Held-out test-set AUROC, AUPRC, and F1 per therapy-response head.
-PATH wins TMT, BINN wins OS, no model wins RT. Okabe-Ito categorical
-colours: BINN blue, GraphPath orange, PATH green.}
-\label{fig:bars}
+\includegraphics[width=\linewidth, height=0.16\textheight, keepaspectratio]{fig2.png}
+\caption{Mean test AUROC (over five identical-split repeats) per
+(model, cohort) cell for each clinical head. Darker cells indicate lower
+AUROC; values near 0.50 denote chance-level discrimination.}
+\label{fig:cross}
 \end{figure}
 
-\begin{figure}[!t]
+\subsection{Prediction Reliability Assessment}
+All three models are evaluated on the same unified 80/10/10 stratified split
+per cohort, so the confusion-matrix counts below are computed on identical
+held-out folds; the counts shown in Fig.~\ref{fig:cm} correspond to a single
+representative seed, while the mean$\pm$CI metrics of Table~\ref{tab:cv} and
+the paired-bootstrap tests of Table~\ref{tab:boot} summarise reliability
+across all five repeats.
+On the TMT head, all three models show a reasonable ability to detect
+true positive cases, with BINN recording the highest TP count. Low FN
+counts across all models indicate that pathway-level features encoding
+targetable molecular drivers are sufficiently captured~\cite{Min2022}. The elevated FP
+counts reflect the difficulty of separating the small TMT-negative
+subgroup from the dominant positive class in a 92\% prevalence cohort,
+rather than a systematic prediction failure.
+
+On the RT head, all three models maintain consistent TP rates despite
+the near-balanced label distribution, which is the most demanding
+setting for threshold-based prediction. BINN and GraphPath show
+comparable FP behaviour, while PATH's higher FP reflects its tendency
+to capture broader pathway co-activation patterns beyond the
+RT-specific signal. FN counts remain low across all models, indicating
+that true RT-positive cases are well-represented in the learned pathway
+features.
+
+On the OS head, all three models perform most reliably. GraphPath leads
+with the highest TP rate, followed closely by BINN and PATH, with FP
+counts remaining modest and consistent. FN counts are the lowest across
+all three heads, indicating that survival-associated pathway signatures
+are the most consistently learned biological signal across all
+architectures~\cite{ma2024coxpath,zhu2023ggnn,salmon2019,senmo2025,poirion2021deepprog,zhao2021deepomix,wang2026pathmog,wen2023fgcnsurv,lin2026moagnn,lan2024deepkegg}. The full prediction breakdown is summarised in Fig.~\ref{fig:cm}.
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=\linewidth]{figures/fig3_confusion.pdf}
-\caption{Confusion-matrix counts on the test split at the 0.5 probability
-threshold (viridis colormap). Each row a model, each column a head.
-GraphPath's OS column shows how a high-AUROC model can still collapse at
-a fixed threshold when the positive class is dominant.}
+\includegraphics[width=\linewidth]{fig3.png}
+\caption{Confusion-matrix counts on the test split at the 0.5
+threshold. Each row a model, each column a clinical head.}
 \label{fig:cm}
 \end{figure}
 
-The confusion matrices in Fig.~\ref{fig:cm} corroborate the calibration
-diagnosis: GraphPath's OS column has 41~false negatives versus
-6~true negatives, exactly the pattern of a model that has learned to
-predict almost everyone positive. BINN and PATH on the same head split
-their errors much more symmetrically (FP/FN ratios near 1).
-
-\subsection{Biological insights: which pathways drive each head?}
+\subsection{Pathway Importance Analysis and Biological Interpretation}
 \label{sec:bio}
 
-Beyond aggregate metrics, what matters clinically is which Reactome
-pathways the trained networks rely on. We compute a model-agnostic
-post-hoc attribution
-\(
-  s_p(h) = \mathbb{E}_x\bigl[\, \bigl| x_p \cdot \partial \hat{p}_h(x) / \partial x_p \bigr|\,\bigr]
-\)
-on the held-out test set --- gradient $\times$ input, a SHAP analogue
-that approximates the Shapley value of pathway~$p$ on the prediction of
-head~$h$ for any model with a differentiable forward pass. The score is
-then min-max normalised per model so that scores from BINN, GraphPath,
-and PATH live on a comparable axis.
-
-\input{artifacts/tex/06_top_pathways_breast.tex}
-
-Three observations stand out across the three models
-(Fig.~\ref{fig:topp}, Table~\ref{tab:top-pathways-breast}):
-
-\begin{itemize}[leftmargin=*]
-\item \textbf{TMT.} MAPK / ERK / JNK signalling pathways
-(\emph{JNK phosphorylation and activation}, \emph{MAP3K8-dependent
-MAPK1/3 activation}) carry the strongest BINN attribution; GraphPath
-emphasises translation-machinery pathways (\emph{Eukaryotic Translation
-Elongation}, \emph{Cap-dependent Translation Initiation}) and signalling
-by NOTCH1. Both signatures are coherent with the literature linking
-MAPK and translational reprogramming to targeted-therapy response in
-HER2 / ER-positive breast cancer.
-\item \textbf{RT.} All three models converge on \emph{ERK/MAPK targets}
-and \emph{Regulation of NF-$\kappa$B signaling}, both well-documented
-mediators of the DNA-damage response. The agreement across architectures
-on this head is reassuring given that the aggregate AUROC on RT is
-modest (\S Results): the models lift the same biology even when the
-prediction itself is noisy.
-\item \textbf{OS\,$\geq$\,180\,d.} \emph{ERK/MAPK targets} reappears,
-joined by chromatin-remodelling programmes (SWI/SNF, BAF complex
-formation) and pro-survival signalling (p75\,NTR via NF-$\kappa$B).
-These are programmes governing transcriptional plasticity, which is
-biologically credible as a 6-month-survival proxy.
-\end{itemize}
-
-\begin{figure}[!t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/fig9_pathway_importance.pdf}
-\caption{Top-10 Reactome pathways per head, ranked by union max
-importance across the three models on the breast cohort. Bars are
-normalised per model. Cross-model agreement (all three bars high)
-indicates a robust pathway signal; one-model spikes indicate
-architecture-specific attribution.}
+\includegraphics[width=0.7\textwidth]{fig4.png}
+\caption{Normalised pathway importance scores for BINN and GraphPath across all three clinical heads. Red arrows mark pathways with inter-model disagreement $>$~0.50.}
 \label{fig:topp}
-\end{figure}
-
-\subsection{Pan-cancer sweep}
-Fig.~\ref{fig:cross} summarises the same three architectures on every
-enabled cohort. The figure is generated automatically from each
-cohort's \texttt{results.json} and is therefore always in sync with the
-training artifacts checked into the repository; cells corresponding to
-runs that have not yet been completed are absent from the bars (a
-caption note enumerates the still-pending combinations). The pan-cancer
-view confirms the headline finding from breast: the architectural
-ranking is phenotype-specific, but the magnitude of each model's per-head
-advantage is cohort-specific. Thyroid OS, for example, saturates so
-heavily that all three models converge to near-perfect AUROC, while
-prostate TMT is so rare that BINN, GraphPath, and PATH all dip below
-chance.
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig8_cross_cohort.pdf}
-\caption{Pan-cancer summary: held-out test-set AUROC for each
-(model, cohort, head) cell. Dotted line marks chance. Bars in
-Okabe--Ito colours (BINN blue, GraphPath orange, PATH green). The
-figure regenerates from the per-cohort \texttt{results.json} every
-build, so partial sweeps are visible.}
-\label{fig:cross}
 \end{figure*}
+
+Pathway importance scores from BINN (gradient\,$\times$\,input attribution)
+and GraphPath (attention-derived importance) were compared across the TMT,
+RT, and OS heads to assess whether the two architectures converged on
+similar biological mechanisms. PATH was excluded because it does not
+generate pathway-level importance scores. Because the two architectures
+produce attributions on different and non-equivalent numerical scales, each
+model's scores were first min--max normalized to $[0,1]$ within each head so
+that only the relative ranking of pathways is compared; the analysis is
+therefore qualitative and hypothesis-generating rather than a quantitative
+equivalence test. Pathways whose normalized scores differed by less than
+0.50 were treated as convergent and prioritized for biological validation,
+whereas larger differences ($>$0.50; red arrows in Fig.~\ref{fig:topp}) were
+flagged as potential architecture-specific effects. The 0.50 cut-off is a
+heuristic for surfacing candidates for manual review, not a calibrated
+significance threshold, and the convergent pathways below should be read as
+literature-supported hypotheses rather than validated findings.
+
+For the TMT head, the models emphasized different layers of the same oncogenic process, with BINN highlighting upstream transcriptional and inflammatory regulation and GraphPath focusing on downstream translational maintenance. Despite these differences, both converged on \textbf{ERK/MAPK Targets} ~\cite{sisinthy2021mapk} in Lung cancer, suggesting a shared biologically meaningful signal.
+
+For the RT head, the strongest convergence was observed for \textbf{Receptor-Mediated Mitophagy} ~\cite{zheng2015mitophagy} ~\cite{kudo2025autophagy} and \textbf{ERK/MAPK Targets} ~\cite{binder2020erkhnscc}. Both pathways have established links to radioresistance through mechanisms involving cellular stress adaptation, DNA repair, and survival signaling. Additional convergence on \textbf{VEGFR2-Mediated Vascular Permeability}~\cite{ge2013vegfr2} further supports the role of tumour microenvironment and vascular signaling in radiation response.
+
+The OS head showed the highest agreement between the two models. Both architectures consistently ranked \textbf{ERK/MAPK Targets} ~\cite{zhao2015erk} ~\cite{fisch2022mapkhnscc} among the most important pathways in both Lung and Head \& Neck cohorts, making it the strongest convergent signal identified in this study. Its consistent appearance across multiple cohorts and clinical endpoints provides strong support for its biological relevance. In contrast, pathways related to apoptosis and metabolism showed lower agreement between the models, suggesting architecture-dependent interpretations that warrant further investigation.
 
 %--------------------------------------------------------------------
 \section{Discussion}
 %--------------------------------------------------------------------
+This benchmark highlights that, under a unified split with matched
+uncertainty quantification, model performance is task-dependent but that
+most apparent inter-architecture differences are not statistically resolved:
+across the treatment-assignment heads, no architecture significantly
+outperforms the others in any cohort. The clearest exception is survival:
+BINN is the most consistent OS predictor and significantly outperforms both
+graph models on breast-cancer OS, indicating that its multi-depth
+hierarchical supervision is effective at capturing survival-related
+biological signals distributed across levels of pathway organization. We
+therefore refrain from the stronger single-split claim that any one model is
+best for targeted-therapy assignment; the prostate cohort is the most
+predictable for TMT, but all three architectures perform comparably there. For RT prediction, all architectures achieved comparable and generally weak results, and the paired-bootstrap tests (Table~\ref{tab:boot}) rarely find significant differences between them on this head. We interpret this as \emph{consistent with}, but not proof of, the hypothesis that the decisive drivers of radiation-therapy assignment are largely clinical (e.g., tumour stage, anatomical site, and treatment-protocol factors) and are not captured by transcriptomic pathway activity. We do not directly test this hypothesis; it should be read as a conjecture motivating future integration of clinical and molecular information, rather than a demonstrated cause of the weak RT performance. The pathway analysis further highlighted the importance of interpretable model architectures. Both BINN and GraphPath consistently identified the ERK/MAPK Targets pathway as highly influential across multiple cohorts and clinical outcomes, increasing confidence that this signal reflects a genuine biological mechanism rather than a model-specific effect~\cite{dhillon2007map}. While PATH achieved strong predictive performance, its lack of pathway-level interpretability makes it more difficult to understand the biological basis of its predictions, which may limit its usefulness for mechanistic insights and future clinical applications~\cite{clauwaert2021explainabletransformer,rosenbacke2024how}.
+Several limitations should be acknowledged. First, and most importantly, the
+labels reflect \emph{treatment exposure} recorded in TCGA (which treatments a
+patient received) rather than a measured \emph{response} to therapy; the TMT
+and RT tasks are therefore treatment-assignment prediction, and the OS task is
+short-term prognostic classification. Findings should accordingly be read as
+predicting documented care and short-term survival, and should be validated on
+cohorts with true response endpoints. Second, although we unify the splits and
+report mean$\pm$95\% CI over five repeated stratified splits together with
+paired-bootstrap significance tests, several cohorts and heads contain very few
+positive (or negative) cases---most acutely thyroid TMT ($n{=}7$ positives),
+prostate and thyroid OS (near-universal prevalence)---so even repeated-split
+estimates for these cells carry wide intervals and should be interpreted with
+care; the corresponding CIs in Table~\ref{tab:cv} make this uncertainty
+explicit. Our uncertainty analysis uses repeated stratified random splits
+rather than full $k$-fold cross-validation, and we do not perform external
+validation on independent cohorts. Third, the OS head is treated as a
+fixed-horizon binary label and does not model censoring or full time-to-event
+dynamics. Finally, PATH applies a gene-membership filter (1{,}431 vs.\ 1{,}706
+pathways), so while inputs share the same Reactome representation the pathway
+node set is not byte-identical across all three models; future work should
+standardize pathway selection. Overall, the results suggest that the strongest, statistically supported
+signal is BINN's advantage for short-term survival (OS) prediction; for
+treatment-assignment (TMT, RT) the three architectures are largely
+comparable under the unified protocol, and RT in particular likely requires
+multimodal molecular and clinical data.
 
-\paragraph*{Structural priors are phenotype-specific.}
-The single clearest take-away is that no architecture dominates: PATH
-wins TMT, BINN wins OS, RT is a wash. This means the choice of inductive
-bias has to be \emph{matched to the phenotype's biology}, not chosen as
-an architectural default. The 5--10$\times$ parameter gap between BINN
-and PATH is not what decides the winner; the gap between heads inside a
-single model is consistently larger than the gap across models on a single
-head. This generalises the observation of Wysocka \emph{et al.}~\cite{wysocka2023review}
-that biological structure regularises pathway-informed networks more
-effectively than additional parameters.
 
-\paragraph*{Reading the immunology off the model.}
-Reactome's Immune System subtree alone contains hundreds of nodes spanning
-innate, adaptive, cytokine, antigen-processing, and TCR/BCR cascades. All
-three models attribute prediction credit at the pathway level (BINN
-through per-layer auxiliary heads, GraphPath through GAT coefficients,
-PATH through Stage~3 edge attention and Stage~4 readout attention), so
-the top-ranked nodes constitute a model-derived immune programme per
-therapy axis. In our runs the TMT signal concentrates on antigen-processing
-and cytokine-signalling pathways --- consistent with the immunotherapy
-biology highlighted by IRnet~\cite{jiang2024irnet} --- while OS preferentially
-weights metabolic and programmed-cell-death pathways. RT, as expected
-from its near-chance performance, surfaces no consistent pathway programme.
-
-\paragraph*{Limitations.}
-\begin{enumerate*}[label=(\arabic*)]
-\item TCGA-BRCA labels the treatment \emph{received}, not the response;
-external validation on labelled-response cohorts (I-SPY-2, METABRIC)
-is the natural next step.
-\item ssGSEA collapses the gene-level CNV+mutation signal that PATH and
-GraphPath were designed to ingest; the pathway-level adaptation costs
-some gene-resolution interpretability.
-\item Single-cohort training risks site-specific batch effects;
-cross-cohort evaluation against TCGA-BLCA or the cohorts used by
-IRnet/PathHDNN would tighten the conclusions.
-\end{enumerate*}
-
-%--------------------------------------------------------------------
 \section{Conclusion}
+
+This study provides a unified benchmark for pathway-informed deep learning in cancer therapy and prognosis prediction. Using Reactome-derived pathway activity profiles from TCGA transcriptomic data, we evaluated BINN, GraphPath, and PATH across five solid-tumor cohorts and three clinically relevant outcomes: targeted molecular therapy (TMT), radiation therapy (RT), and overall survival (OS $\geq$ 6 months).
+
+The results demonstrate that pathway-guided architectures can effectively leverage biological knowledge for clinical prediction while providing interpretable pathway-level insights. However, no single model consistently outperformed the others across all cancer cohorts and prediction tasks, highlighting that model performance depends on both the clinical endpoint and the underlying disease context. These findings suggest that the choice of pathway-informed architecture should be guided by the specific prediction objective rather than by aggregate benchmark performance alone.
+
+Beyond predictive accuracy, this work establishes a standardized and reproducible evaluation framework for comparing pathway-based deep learning models under consistent data, preprocessing, training, and evaluation settings. By bringing multiple clinically relevant prediction tasks into a single benchmark, the study provides a foundation for future research in biologically informed machine learning and precision oncology. Future work should explore response-labeled cohorts, integrate multimodal clinical and molecular data, and validate findings in larger independent datasets to further improve the clinical utility of pathway-guided predictive models.
+
 %--------------------------------------------------------------------
-
-We placed three contemporary pathway-informed deep architectures on a
-multi-cohort TCGA substrate (breast, lung, prostate, head \& neck, thyroid)
-predicting three independent therapy-response phenotypes, with every
-figure traceable to a versioned phase-pipeline artifact. On the
-breast-cancer headline cohort the architectural ranking is
-phenotype-specific (PATH for TMT, BINN for OS, none for RT) and the
-Reactome immune-system subtree dominates the importance signals across
-all three models. The cross-cohort label-prevalence shifts of
-Fig.~\ref{fig:cohorts} suggest that the architectural ranking itself
-will be cohort-specific --- an OS-saturated cohort like thyroid leaves
-almost no negative-class signal for the survival head, while a
-TMT-rare cohort like prostate flips the imbalance direction of the
-breast TMT head. Re-running the same pipeline with
-\texttt{-{}-cohort lung}, \texttt{prostate}, \texttt{head\_neck}, or \texttt{thyroid}
-is a one-flag change; we frame the resulting pan-cancer comparison as
-the natural follow-up, and we hope the framework lowers the friction
-of cross-architecture comparison for the systems-immunology community.
-
-\bibliographystyle{IEEEtran}
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 
 \end{document}

@@ -2,25 +2,25 @@
 \begin{table}[!ht]
 \centering
 \footnotesize
-\caption{BINN. end-of-run loss values.}
+\caption{Training configuration and end-of-run loss values for the Reactome-informed BINN. Hyperparameters follow Hartman et al. (2023) with class-weighted BCE for the multi-label heads.}
 \label{tab:binn-training}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lr}
 \toprule
 Setting & Value \\
 \midrule
-Hidden layers & 3 \\
+Hidden layers & 4 \\
 Layer sizes & 1686, 656, 306, 163 \\
-Active parameters & 1,366,188 \\
+Active parameters & 14,535 \\
 Optimizer & Adam \\
 Learning rate (initial) & 1e-03 \\
 Weight decay (L2) & 1e-03 \\
 Dropout & 0.200 \\
 Batch size & 32 \\
-Epochs run & 22 \\
-Best validation loss & 0.8332 \\
-Final training loss & 0.5830 \\
-Final validation loss & 0.9061 \\
+Epochs run & 24 \\
+Best validation loss & 0.6959 \\
+Final training loss & 0.5841 \\
+Final validation loss & 0.7871 \\
 Final learning rate & 2.5e-04 \\
 \bottomrule
 \end{tabular}}

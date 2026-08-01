@@ -1,4 +1,5 @@
 """Hyperparameters and paths for the GraphPath model (Ma & Wang 2024)."""
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -31,7 +32,7 @@ class Config:
 
     val_frac: float = 0.10
     test_frac: float = 0.10
-    seed: int = 42
+    seed: int = field(default_factory=lambda: int(os.environ.get("THERAP_SEED", "42")))
     batch_size: int = 32
     lr: float = 0.05
     momentum: float = 0.9

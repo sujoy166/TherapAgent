@@ -378,6 +378,14 @@ def phase_evaluate(cfg: Config) -> dict:
         }, f, indent=2)
     print(f"  saved results → {_results_path(cfg).relative_to(cfg.project_root)}")
 
+    # Per-sample test predictions for paired bootstrap significance testing.
+    np.savez(
+        cfg.artifacts_dir / "preds.npz",
+        test_p=np.asarray(test_p), test_y=np.asarray(test_y),
+        thresholds=np.asarray([thresholds[h] for h in cfg.head_names]),
+        head_names=np.asarray(list(cfg.head_names)),
+    )
+
     rows = []
     for split_name, m in (("Val", val_m), ("Test", test_m)):
         for head in cfg.head_names:

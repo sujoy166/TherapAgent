@@ -2,7 +2,7 @@
 \begin{table}[!ht]
 \centering
 \footnotesize
-\caption{Reactome-derived pathway-pathway adjacency used by GraphPath. Edges connect parent/child pairs and siblings sharing a parent.}
+\caption{Reactome-derived pathway-pathway adjacency used by GraphPath. Edges connect parent/child pairs and (optionally) siblings that share a common parent in the Reactome hierarchy.}
 \label{tab:gp-graph}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lr}
@@ -11,7 +11,7 @@ Property & Value \\
 \midrule
 Reactome-matched pathways & 1686 \\
 Unmatched pathway names & 20 \\
-Adjacency type & parent/child + siblings (KEGG-analogue) \\
+Adjacency type & parent/child + siblings \\
 Undirected edges & 4672 \\
 Average degree & 5.54 \\
 Max degree & 29 \\

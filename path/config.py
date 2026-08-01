@@ -1,4 +1,5 @@
 """Hyperparameters and paths for the PATH model (Howlader et al. 2026)."""
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -33,7 +34,7 @@ class Config:
 
     val_frac: float = 0.10
     test_frac: float = 0.10
-    seed: int = 42
+    seed: int = field(default_factory=lambda: int(os.environ.get("THERAP_SEED", "42")))
     batch_size: int = 16
     lr: float = 1e-4
     weight_decay: float = 5e-4

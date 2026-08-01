@@ -1,0 +1,90 @@
+\section{Introduction}
+\textcolor{red}{koushik}
+
+Cancer treatment planning is a difficult clinical problem because one
+patient may need several different kinds of decisions at the same time. A
+clinician may need to decide whether a patient should receive a targeted
+molecular therapy, whether radiation therapy should be used, and whether
+the patient is likely to survive beyond a short-term clinical window. These
+three questions are related, but they are not the same question. Targeted
+molecular therapy aims to block specific molecular drivers of cancer
+growth~\cite{Min2022}. Radiation therapy uses ionising radiation to damage
+tumour cells~\cite{Baskar2012}. Short-term survival prediction is often used
+to support risk stratification and care planning in oncology~\cite{Parikh2019,
+SideyGibbons2022}. A useful model should therefore learn these outcomes as
+separate but connected prediction tasks, instead of forcing them into one
+single label.
+
+Gene expression data can help with this problem because it captures which
+genes are active in each tumour sample. However, raw gene expression has
+thousands of genes, and it can be hard to understand what a model learns
+from such a large input. A more interpretable approach is to summarize gene
+expression into biological pathways. Gene set enrichment analysis was
+introduced to connect gene expression patterns with known biological
+processes~\cite{subramanian2005gsea}, and single-sample GSEA makes it
+possible to estimate pathway activity for each individual
+sample~\cite{barbie2009ssgsea}. In this paper, we use Reactome, a curated
+pathway knowledgebase, to convert each patient into a vector of pathway
+activity scores~\cite{gillespie2022reactome}. This representation is easier
+to connect back to biology because each feature corresponds to a known
+pathway rather than an isolated gene.
+
+We formulate our problem as a multi-label prediction task. Given one
+patient's Reactome pathway activity profile, the model predicts three binary
+outcomes: targeted molecular therapy (TMT), radiation therapy (RT), and
+overall survival of at least 180 days (OS $\geq$ 180 d). This setup is
+important because a patient can belong to any combination of these outcomes.
+For example, one patient may receive targeted therapy but not radiation,
+while another may receive radiation and also survive beyond 180 days. By
+using three output heads, the model can learn which pathway patterns are
+most useful for each clinical question.
+
+Recent work has shown that biological knowledge can be built directly into
+deep learning models. P-NET used pathway structure to create a neural
+network for prostate cancer discovery~\cite{elmarakeby2021pnet}. BINN
+extended this idea by using biologically informed network connections to
+support pathway-level interpretation~\cite{hartman2023binn}. GraphPath
+models pathways as nodes in a graph and uses graph attention to learn
+relationships between pathways~\cite{ma2024graphpath,velickovic2018gat}.
+PATH uses a graph transformer to represent pathway interactions for cancer
+prognosis~\cite{howlader2026path}. These models are promising, but they
+were developed and evaluated under different settings. Their datasets,
+labels, input features, and evaluation tasks are not the same, so it is
+difficult to know whether one architecture is generally better or whether
+each one works best for different clinical outcomes.
+
+In this work, we compare these pathway-informed models under one common
+pipeline. We use gene expression and clinical data from The Cancer Genome
+Atlas (TCGA), accessed through the UCSC Xena platform~\cite{Weinstein2013,
+xena2020}. We study five solid-tumour cohorts: breast, lung, prostate, head
+and neck, and thyroid cancer. For every cohort, we use the same preprocessing
+strategy: gene expression is converted into Reactome pathway activity scores,
+clinical records are converted into the three binary labels, and the same
+multi-label learning objective is used for all models. This makes the
+comparison more direct because the main difference between models is their
+architecture, not the data pipeline.
+
+Our goal is not only to report which model has the highest score, but also
+to understand when each kind of biological structure helps. BINN represents
+Reactome as a sparse hierarchy. GraphPath represents pathways as an
+attention-based graph. PATH uses a transformer-style graph model with
+pathway interactions. By testing these approaches on the same task, we ask a
+simple question: do different pathway-based architectures help with
+different therapy and survival outcomes? This question matters because label
+distributions are different across cancer types. A cohort with many patients
+receiving targeted therapy may not behave like a cohort where targeted
+therapy is rare. Therefore, the best model may depend on both the phenotype
+being predicted and the cancer cohort being studied.
+
+The main contributions of this paper are as follows:
+\begin{itemize}[leftmargin=*]
+  \item We build a unified TCGA benchmark for pathway-based prediction of
+  TMT, RT, and OS $\geq$ 180 d across five solid-tumour cohorts.
+  \item We use the same Reactome and ssGSEA-based pathway representation for
+  every patient, making the input space consistent across cohorts and models.
+  \item We adapt and compare three pathway-informed deep learning
+  architectures: BINN, GraphPath, and PATH.
+  \item We show that model performance is phenotype-specific, meaning that
+  the strongest architecture can change depending on whether the target is
+  therapy assignment or short-term survival.
+\end{itemize}

@@ -2,7 +2,7 @@
 \begin{table}[!ht]
 \centering
 \footnotesize
-\caption{BINN. Source CSVs and join cardinalities.}
+\caption{Source CSVs and join cardinalities. Features come from \textbackslash\{\}texttt\{pathway\textbackslash\{\}\_scores.csv\} (transposed to samples \textbackslash\{\}(\textbackslash\{\}times\textbackslash\{\}) pathways); labels come from \textbackslash\{\}texttt\{pathway\textbackslash\{\}\_phenotype\textbackslash\{\}\_mapping.csv\}. The model trains on the sample-wise intersection.}
 \label{tab:binn-data-alignment}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lr}
@@ -14,8 +14,8 @@ pathway\textbackslash\{\}\_scores.csv – pathways & 1706 \\
 pathway\textbackslash\{\}\_phenotype\textbackslash\{\}\_mapping.csv – labeled samples & 618 \\
 Reactome-matched input pathways & 1686 \\
 Samples used by model (intersection) & 618 \\
-Final X shape (samples \$\textbackslash\{\}times\$ pathways) & (618, 1686) \\
-Final Y shape (samples \$\textbackslash\{\}times\$ heads) & (618, 3) \\
+Final X shape (samples × pathways) & (618, 1686) \\
+Final Y shape (samples × heads) & (618, 3) \\
 \bottomrule
 \end{tabular}}
 \end{table}

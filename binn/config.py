@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -42,9 +43,12 @@ class Config:
     n_hidden_layers: int = 4
 
     # ── Training ────────────────────────────────────────────────────────
-    val_frac: float = 0.15
-    test_frac: float = 0.15
-    seed: int = 42
+    # Unified 80/10/10 split shared across BINN, GraphPath, and PATH so that
+    # every architecture is trained and evaluated on identical folds per
+    # cohort (see slurm/20_cv.sbatch). THERAP_SEED selects the repeat.
+    val_frac: float = 0.10
+    test_frac: float = 0.10
+    seed: int = field(default_factory=lambda: int(os.environ.get("THERAP_SEED", "42")))
     batch_size: int = 32
     lr: float = 1e-3
     weight_decay: float = 1e-3
